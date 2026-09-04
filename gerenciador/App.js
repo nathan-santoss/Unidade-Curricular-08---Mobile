@@ -5,14 +5,13 @@ import HomePage from "./src/screens/home.jsx";
 
 export default function App() {
   const [logado, setLogado] = useState(false);
-
+  
   const irHome = () => {
     setLogado(true)
   }
   const logoutSys = () => {
     setLogado(false)
   }
-
 
   if (logado === true) {
     return <HomePage onLogout={logoutSys}/>

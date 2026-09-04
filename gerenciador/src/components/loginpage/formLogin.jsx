@@ -1,9 +1,10 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native"
 import { login_css } from "../../styles/loginStyles.js"
 import { useState } from "react"
+import trueAdmin from "../../utils/checarAdmin.js";
 
 // inicio do componente
-export default function FormLogin() {
+export default function FormLogin({startLogin}) {
     const [email, setEmail] = useState("");
     const [senha, setSenha] = useState("");
 
@@ -17,8 +18,13 @@ export default function FormLogin() {
                 email: email,
                 senha: senha
             }
-            console.log(`Tentativa de login efetuada com sucesso, dados do usuário: ${dadosDoUsuario}`);
-
+            const adminTeste = trueAdmin(dadosDoUsuario)
+            if(adminTeste){
+                startLogin()
+                console.log(`Tentativa de login efetuada com sucesso, dados do usuário: ${dadosDoUsuario.email}`);
+            }else{
+                console.log('Erro ao efetuar login');
+            }
         }
     }
     return (
