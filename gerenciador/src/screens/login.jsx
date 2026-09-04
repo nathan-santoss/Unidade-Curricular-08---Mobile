@@ -3,10 +3,10 @@ import { login_css } from "../styles/loginStyles";
 
 import FormLogin from "../components/loginpage/formLogin.jsx";
 
-export default function LoginPage() {
-    return (
+export default function LoginPage({onLoginSucess}) {
+    return (    
         <SafeAreaView style={login_css.container}>
-            <FormLogin/>
+            <FormLogin startLogin = {onLoginSucess}/>
         </SafeAreaView>
     );
 }
