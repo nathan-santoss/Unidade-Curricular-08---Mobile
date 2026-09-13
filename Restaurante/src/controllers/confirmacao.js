@@ -1,18 +1,23 @@
 import { criarPedido } from '../models/pedido.js';
 
-// O ID do carrinho liga as duas gravações e permite recuperar uma limpeza interrompida.
-export async function registrarPedido(carrinho, ultimoPedido, armazenamento) {
-  if (!carrinho) throw new Error('Seu carrinho está vazio.');
+// Pelo ID do carrinho, descubro se já registrei este pedido em uma tentativa anterior.
+export async function registrarPedido(carrinho, ultimoPedido, armazenamento, usuarioId) {
+  if (!carrinho) {
+    throw new Error('Seu carrinho está vazio.');
+  }
   let pedido = ultimoPedido;
   if (!pedido || pedido.carrinhoId !== carrinho.id) {
+    // Crio um registro somente se este carrinho ainda não corresponde ao último pedido.
     pedido = criarPedido(carrinho);
-    await armazenamento.salvarUltimoPedido(pedido);
+    // Primeiro salvo o pedido; só depois tento apagar o carrinho.
+    await armazenamento.salvarUltimoPedido(pedido, usuarioId);
   }
   try {
-    await armazenamento.apagarCarrinho();
-    return { pedido, limpezaPendente: false };
+    // Tento apagar o carrinho depois do registro, preservando o pedido se esta etapa falhar.
+    await armazenamento.apagarCarrinho(usuarioId);
+    return { pedido: pedido, limpezaPendente: false };
   } catch {
-    // O pedido já existe: a próxima tentativa deve apenas terminar a limpeza.
-    return { pedido, limpezaPendente: true };
+    // Se a limpeza falhar, aviso que ainda preciso terminá-la sem criar outro pedido.
+    return { pedido: pedido, limpezaPendente: true };
   }
 }
