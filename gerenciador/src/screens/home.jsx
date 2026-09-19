@@ -1,26 +1,16 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, TouchableOpacity } from "react-native";
-import { home_css } from "../styles/homeStyles.js";    
+import { Text } from "react-native";
 
-export default function HomePage({onLogout}) {
-    const fazerLogout = () => {
-        console.log('Usuário fez o logout');
-        onLogout()
-    }
+import { home_css } from "../styles/homeStyles.js";
 
-    
-    return(
-    <SafeAreaView style = {home_css.container}>
-        <Text style = {home_css.titulo}> Bem vindo!
-        </Text>
-            <TouchableOpacity 
-                style = {home_css.botaoSair}
-                onPress={fazerLogout}
-            >
-                <Text style = {home_css.textoBotaoSair}>
-                    Sair
-                </Text>
-            </TouchableOpacity>
-    </SafeAreaView>
-    )
+export default function HomePage() {
+    return (
+        // Exibe a área inicial do aplicativo após o login.
+        <SafeAreaView style={home_css.container}>
+            {/* Mensagem principal da tela inicial. */}
+            <Text style={home_css.titulo}>
+                Bem-vindo!
+            </Text>
+        </SafeAreaView>
+    );
 }
