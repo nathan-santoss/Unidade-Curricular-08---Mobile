@@ -96,21 +96,14 @@ A revisão foi feita antes das alterações, considerando todos os arquivos de `
 
 A documentação [Expo 54](https://docs.expo.dev/versions/v54.0.0/) foi consultada conforme `AGENTS.md`, junto à referência [SQLite do Expo 57](https://docs.expo.dev/versions/v57.0.0/sdk/sqlite/) e às APIs efetivamente instaladas. A navegação segue os fluxos documentados de [autenticação](https://reactnavigation.org/docs/auth-flow/) e [useFocusEffect](https://reactnavigation.org/docs/use-focus-effect/).
 
-## Verificações automatizadas
-
-Com Node.js 24:
+## Verificação de dependências e exportação
 
 ```sh
-npm test
 npx expo install --check
 npx expo export --platform ios --output-dir dist/ios --no-bytecode
 ```
 
-Os 13 testes exercitam os controllers, services, repositories e schema de verdade. O SQL roda no SQLite nativo do Node; as pontes de SecureStore, AsyncStorage e expo-sqlite são substituídas no ambiente de teste. Nenhuma dependência de teste adicional foi instalada: a transformação JavaScript utiliza o Babel já presente nas dependências do Expo.
-
-Cobertura: inicialização repetida, restrições SQL, cadastro/login, e-mail duplicado, senha incorreta, rollback quando a credencial falha, CRUD, status, campos opcionais, datas inválidas, IDs inválidos, tarefa inexistente, isolamento entre contas, entradas com aspas/SQL, erros assíncronos, sessão e preferências. A persistência do SQLite é verificada fechando e reabrindo um arquivo temporário. A restauração das pontes de armazenamento é simulada; não equivale a testar o Keychain ou AsyncStorage no iPhone.
-
-Resultados nesta entrega: 13 testes aprovados; conferência local das dependências compatível; imports/sintaxe revisados; exportação JavaScript iOS aprovada. A exportação não é uma compilação nativa nem substitui o teste no aparelho.
+A exportação gera o pacote JavaScript para iOS. Ela não é uma compilação nativa nem substitui a conferência no aparelho descrita abaixo.
 
 ## Roteiro manual no iPhone — pendente de execução
 
@@ -130,6 +123,6 @@ Este ambiente Windows não dispõe de simulador iOS ou iPhone conectado. Conferi
 - [ ] Criar conta B e confirmar que nenhuma tarefa da A aparece e que a preferência é independente.
 - [ ] Fazer logout; confirmar que voltar não reabre telas autenticadas. Entrar na A e conferir seus registros.
 - [ ] Abrir o repositório; conferir teclado, rolagem, texto ampliado e área do indicador inferior do iPhone.
-- [ ] Abrir uma tarefa inexistente em teste de desenvolvimento e conferir erro/voltar. Os controllers já cobrem esse caso automaticamente.
+- [ ] Abrir uma tarefa inexistente em teste de desenvolvimento e conferir erro/voltar.
 
 Para a apresentação: demonstre primeiro o CRUD; depois explique a relação entre as tabelas, o caminho View → Controller → Service → Repository e a finalidade diferente de cada armazenamento.
