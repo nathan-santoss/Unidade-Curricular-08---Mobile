@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const login_css = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#F7F7F7',
   },
   formContainer: {
     flex: 1,
@@ -25,17 +25,5 @@ export const login_css = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#ddd',
-  },
-  botao: {
-    backgroundColor: '#007AFF',
-    height: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textoBotao: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });

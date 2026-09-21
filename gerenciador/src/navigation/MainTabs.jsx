@@ -6,7 +6,7 @@ import ProfilePage from "../screens/profile.jsx";
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabs({ onLogout }) {
+export default function MainTabs() {
     return (
         <Tab.Navigator
             // Define a Home como a primeira área exibida após o login.
@@ -21,12 +21,11 @@ export default function MainTabs({ onLogout }) {
                 // Define as cores utilizadas pelas abas ativas e inativas.
                 tabBarActiveTintColor: "#2563EB",
                 tabBarInactiveTintColor: "#737373",
+                tabBarIconStyle: { display: "none" },
 
                 // Configura o visual da barra de navegação inferior.
                 tabBarStyle: {
-                    height: 70,
                     paddingTop: 8,
-                    paddingBottom: 10,
                     backgroundColor: "#FFFFFF",
                     borderTopWidth: 1,
                     borderTopColor: "#E5E5E5",
@@ -50,7 +49,7 @@ export default function MainTabs({ onLogout }) {
 
             {/* 
         Usa um Stack próprio para permitir que a área de tarefas
-        navegue entre lista, cadastro e outras telas futuras.
+        navegue entre lista, formulário e detalhes.
       */}
             <Tab.Screen
                 name="Tasks"
@@ -63,12 +62,11 @@ export default function MainTabs({ onLogout }) {
             {/* Exibe os dados da conta e disponibiliza a ação de logout. */}
             <Tab.Screen
                 name="Profile"
+                component={ProfilePage}
                 options={{
                     tabBarLabel: "Perfil",
                 }}
-            >
-                {() => <ProfilePage onLogout={onLogout} />}
-            </Tab.Screen>
+            />
         </Tab.Navigator>
     );
 }

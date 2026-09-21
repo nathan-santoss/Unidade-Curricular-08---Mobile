@@ -1,120 +1,102 @@
-import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { useUserTasks } from "../hooks/useUserTasks.js";
+import { getShowCompletedTasks } from "../services/preferencesService.js";
+import { STATUS_OPTIONS, TASK_STATUS } from "../constants/taskConstants.js";
+import AppButton from "../components/AppButton.jsx";
+import TaskCard from "../components/TaskCard.jsx";
+import EmptyState from "../components/EmptyState.jsx";
+import OptionSelector from "../components/OptionSelector.jsx";
+import { commonStyles } from "../styles/commonStyles.js";
+
+const FILTER_OPTIONS = [{ value: "ALL", label: "Todas" }, ...STATUS_OPTIONS];
 
 export default function TasksPage({ navigation }) {
-    // Abre o formulário responsável pelo cadastro de uma nova tarefa.
-    const abrirFormulario = () => {
-        navigation.navigate("TaskForm");
-    };
+    const { user } = useAuth();
+    const { tasks, loading, error, reload } = useUserTasks();
+    const [filter, setFilter] = useState("ALL");
+    const [showCompleted, setShowCompleted] = useState(true);
+    const [preferencesLoading, setPreferencesLoading] = useState(true);
+    const [preferencesError, setPreferencesError] = useState("");
+    const [attempt, setAttempt] = useState(0);
+
+    // Releitura ao voltar do Perfil, onde a preferência pode ter mudado.
+    useFocusEffect(useCallback(() => {
+        let active = true;
+        setPreferencesLoading(true);
+        setPreferencesError("");
+        async function loadPreference() {
+            try {
+                const value = await getShowCompletedTasks(user.id);
+                if (active) setShowCompleted(value);
+            } catch (failure) {
+                if (active) setPreferencesError(failure.message);
+            } finally {
+                if (active) setPreferencesLoading(false);
+            }
+        }
+        loadPreference();
+        return () => { active = false; };
+    }, [user.id, attempt]));
+
+    const visibleTasks = tasks.filter((task) => {
+        if (!showCompleted && task.status === TASK_STATUS.COMPLETED) return false;
+        if (filter !== "ALL" && task.status !== filter) return false;
+        return true;
+    });
+
+    function retry() {
+        reload();
+        setAttempt((value) => value + 1);
+    }
+
+    let content;
+    if (loading || preferencesLoading) {
+        content = <ActivityIndicator style={styles.loading} size="large" color="#2563EB" />;
+    } else if (error || preferencesError) {
+        content = (
+            <View style={commonStyles.center}>
+                <Text style={commonStyles.error}>{error || preferencesError}</Text>
+                <AppButton title="Tentar novamente" onPress={retry} />
+            </View>
+        );
+    } else {
+        let emptyTitle = "Nenhuma tarefa neste filtro";
+        let emptyMessage = "Escolha outro status ou confira sua preferência no Perfil.";
+        if (tasks.length === 0) {
+            emptyTitle = "Nenhuma tarefa cadastrada";
+            emptyMessage = "Adicione uma tarefa para começar a organizar suas atividades.";
+        }
+        content = (
+            <FlatList data={visibleTasks} keyExtractor={(item) => String(item.id)}
+                contentContainerStyle={styles.list} ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+                renderItem={({ item }) => <TaskCard task={item} onPress={() => navigation.navigate("TaskDetails", { taskId: item.id })} />}
+                ListEmptyComponent={<EmptyState title={emptyTitle} message={emptyMessage} />} />
+        );
+    }
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Organiza o título e a ação principal da tela. */}
+        <SafeAreaView style={commonStyles.screen} edges={["top", "left", "right"]}>
             <View style={styles.header}>
-                <View style={styles.headerText}>
-                    <Text style={styles.title}>
-                        Minhas tarefas
-                    </Text>
-
-                    <Text style={styles.subtitle}>
-                        Organize e acompanhe suas atividades.
-                    </Text>
+                <View>
+                    <Text style={commonStyles.title}>Minhas tarefas</Text>
+                    <Text style={commonStyles.subtitle}>Organize e acompanhe suas atividades.</Text>
                 </View>
-
-                {/* Leva o usuário para o formulário de cadastro. */}
-                <Pressable
-                    style={styles.addButton}
-                    onPress={abrirFormulario}
-                >
-                    <Text style={styles.addButtonText}>
-                        + Nova tarefa
-                    </Text>
-                </Pressable>
+                <AppButton title="+ Nova tarefa" onPress={() => navigation.navigate("TaskForm")} />
+                <OptionSelector options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
+                {!showCompleted && <Text style={styles.notice}>Concluídas ocultas. Altere essa preferência no Perfil.</Text>}
             </View>
-
-            {/*
-        Estado exibido enquanto ainda não existem tarefas cadastradas.
-        Depois esta área será substituída pela lista carregada do SQLite.
-      */}
-            <View style={styles.emptyContainer}>
-                <Text style={styles.emptyTitle}>
-                    Nenhuma tarefa cadastrada
-                </Text>
-
-                <Text style={styles.emptyText}>
-                    Adicione uma tarefa para começar a organizar suas atividades.
-                </Text>
-            </View>
+            {content}
         </SafeAreaView>
     );
 }
 
-// Mantém os estilos específicos desta tela no mesmo arquivo.
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F7F7F7",
-        paddingHorizontal: 20,
-    },
-
-    header: {
-        paddingTop: 24,
-        gap: 20,
-    },
-
-    headerText: {
-        gap: 6,
-    },
-
-    title: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#1F1F1F",
-    },
-
-    subtitle: {
-        fontSize: 15,
-        color: "#6B6B6B",
-    },
-
-    addButton: {
-        height: 48,
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: 10,
-        backgroundColor: "#2563EB",
-    },
-
-    addButtonText: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#FFFFFF",
-    },
-
-    emptyContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 30,
-    },
-
-    emptyTitle: {
-        fontSize: 18,
-        fontWeight: "600",
-        color: "#333333",
-        textAlign: "center",
-    },
-
-    emptyText: {
-        marginTop: 8,
-        fontSize: 14,
-        color: "#777777",
-        textAlign: "center",
-        lineHeight: 20,
-    },
+    header: { padding: 20, gap: 16 },
+    list: { paddingHorizontal: 20, paddingBottom: 24, flexGrow: 1 },
+    loading: { marginTop: 40 },
+    notice: { color: "#6B6B6B", fontSize: 13, lineHeight: 18 },
 });

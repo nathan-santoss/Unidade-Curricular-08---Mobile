@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import TasksPage from "../screens/tasks.jsx";
 import TaskFormPage from "../screens/taskForm.jsx";
+import TaskDetailsPage from "../screens/taskDetails.jsx";
 
 const Stack = createNativeStackNavigator();
 
@@ -15,17 +16,18 @@ export default function TasksStack() {
                 headerShown: false,
             }}
         >
-            {/* Tela principal onde as tarefas serão exibidas. */}
+            {/* Lista das tarefas do usuário autenticado. */}
             <Stack.Screen
                 name="TasksList"
                 component={TasksPage}
             />
 
-            {/* Formulário utilizado para cadastrar uma nova tarefa. */}
+            {/* Formulário compartilhado pelo cadastro e pela edição. */}
             <Stack.Screen
                 name="TaskForm"
                 component={TaskFormPage}
             />
+            <Stack.Screen name="TaskDetails" component={TaskDetailsPage} />
         </Stack.Navigator>
     );
 }
