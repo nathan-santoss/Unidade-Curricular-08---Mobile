@@ -9,8 +9,8 @@ import { commonStyles } from "../styles/commonStyles.js";
 // Endereço conferido no remote origin deste projeto.
 const REPOSITORY_URL = "https://github.com/nathan-santoss/Unidade-Curricular-08---Mobile";
 
-export default function ProfilePage() {
-    const { user, logout } = useAuth();
+export default function ProfilePage({ navigation }) {
+    const { user, logout, reminderWarning } = useAuth();
     const [showCompleted, setShowCompleted] = useState(true);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -90,6 +90,8 @@ export default function ProfilePage() {
                     {(loading || saving) && <ActivityIndicator color="#2563EB" />}
                     {Boolean(error) && <View style={commonStyles.actions}><Text style={commonStyles.error}>{error}</Text><AppButton title="Tentar novamente" onPress={() => setAttempt((value) => value + 1)} /></View>}
                 </View>
+                {Boolean(reminderWarning) && <Text style={commonStyles.error}>{reminderWarning}</Text>}
+                <AppButton title="Configurações" variant="secondary" onPress={() => navigation.navigate("Settings")} disabled={leaving} />
                 <Text style={commonStyles.sectionTitle}>Sobre o aplicativo</Text>
                 <Text style={commonStyles.subtitle}>Gerenciador de tarefas acadêmico. Contas e tarefas ficam neste dispositivo. A consulta ao repositório abre o navegador.</Text>
                 <AppButton title="Abrir repositório do projeto" variant="secondary" onPress={openRepository} />

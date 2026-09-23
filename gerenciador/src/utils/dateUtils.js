@@ -28,3 +28,32 @@ export function formatDateForDisplay(value) {
     const [year, month, day] = value.split("-");
     return `${day}/${month}/${year}`;
 }
+
+export function formatTimeForDatabase(value = "") {
+    const time = value.trim();
+    if (time === "") return "";
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+        throw new Error("Informe um horário válido no formato HH:MM (00:00 a 23:59).");
+    }
+    return time;
+}
+
+// Combina data e horário no fuso local; não interpreta a data como UTC.
+export function getTaskDateTime(date, time) {
+    if (!date || !time) return null;
+    const [year, month, day] = date.split("-").map(Number);
+    const [hour, minute] = time.split(":").map(Number);
+    const result = new Date(year, month - 1, day, hour, minute);
+    if (result.getHours() !== hour || result.getMinutes() !== minute ||
+        result.getDate() !== day || result.getMonth() !== month - 1 || result.getFullYear() !== year) {
+        throw new Error("Esse horário não existe na data escolhida no fuso do dispositivo.");
+    }
+    return result;
+}
+
+export function formatTaskDeadline(task) {
+    if (!task.due_date) return "Sem data limite";
+    let text = formatDateForDisplay(task.due_date);
+    if (task.due_time) text += ` às ${task.due_time}`;
+    return text;
+}

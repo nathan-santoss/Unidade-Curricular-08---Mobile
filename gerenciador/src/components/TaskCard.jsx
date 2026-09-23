@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getPriorityLabel, getStatusLabel, TASK_PRIORITY, TASK_STATUS } from "../constants/taskConstants.js";
-import { formatDateForDisplay } from "../utils/dateUtils.js";
+import { formatTaskDeadline } from "../utils/dateUtils.js";
 
 export default function TaskCard({ task, onPress }) {
     const priorityStyle = [styles.badge];
@@ -17,7 +17,7 @@ export default function TaskCard({ task, onPress }) {
                 <Text style={priorityStyle}>{getPriorityLabel(task.priority)}</Text>
                 <Text style={statusStyle}>{getStatusLabel(task.status)}</Text>
             </View>
-            {Boolean(task.due_date) && <Text style={styles.date}>Prazo: {formatDateForDisplay(task.due_date)}</Text>}
+            {Boolean(task.due_date) && <Text style={styles.date}>Prazo: {formatTaskDeadline(task)}</Text>}
         </Pressable>
     );
 }

@@ -45,6 +45,7 @@ export async function initializeDatabase() {
       title TEXT NOT NULL,
       description TEXT,
       due_date TEXT,
+      due_time TEXT,
 
       priority TEXT NOT NULL DEFAULT 'MEDIA'
         CHECK(priority IN ('BAIXA', 'MEDIA', 'ALTA')),
@@ -60,4 +61,10 @@ export async function initializeDatabase() {
         ON DELETE CASCADE
     );
   `);
+
+    // Atualiza bancos já existentes sem apagar usuários ou tarefas.
+    const columns = await db.getAllAsync("PRAGMA table_info(tasks);");
+    if (!columns.some((column) => column.name === "due_time")) {
+        await db.execAsync("ALTER TABLE tasks ADD COLUMN due_time TEXT;");
+    }
 }

@@ -6,6 +6,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import LoginPage from "./src/screens/login.jsx";
 import RegisterPage from "./src/screens/register.jsx";
+import SettingsPage from "./src/screens/settings.jsx";
 import MainTabs from "./src/navigation/MainTabs.jsx";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext.jsx";
 import { initializeDatabase } from "./src/database/database.js";
@@ -43,7 +44,12 @@ function AppNavigation() {
             </Stack.Group>
         );
     } else {
-        screens = <Stack.Screen name="Main" component={MainTabs} />;
+        screens = (
+            <Stack.Group>
+                <Stack.Screen name="Main" component={MainTabs} />
+                <Stack.Screen name="Settings" component={SettingsPage} />
+            </Stack.Group>
+        );
     }
 
     return (

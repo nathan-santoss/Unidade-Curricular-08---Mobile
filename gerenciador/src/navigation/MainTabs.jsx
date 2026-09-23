@@ -3,10 +3,12 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomePage from "../screens/home.jsx";
 import TasksStack from "./TasksStack.jsx";
 import ProfilePage from "../screens/profile.jsx";
+import { useTaskNotifications } from "../hooks/useTaskNotifications.js";
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabs() {
+export default function MainTabs({ navigation }) {
+    useTaskNotifications(navigation);
     return (
         <Tab.Navigator
             // Define a Home como a primeira área exibida após o login.

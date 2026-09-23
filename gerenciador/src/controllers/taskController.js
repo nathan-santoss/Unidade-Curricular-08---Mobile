@@ -9,9 +9,9 @@ import {
 import { executeController } from "./controllerResult.js";
 
 // Cada operação informa seus dados; o helper centraliza apenas sucesso e erro.
-export function createTaskController(userId, title, description, dueDate, priority) {
+export function createTaskController(userId, title, description, dueDate, priority, dueTime) {
     return executeController(async () => ({
-        task: await createTaskService(userId, title, description, dueDate, priority),
+        task: await createTaskService(userId, title, description, dueDate, priority, dueTime),
     }), { task: null });
 }
 
@@ -27,9 +27,9 @@ export function getTaskByIdController(taskId, userId) {
     }), { task: null });
 }
 
-export function updateTaskController(taskId, userId, title, description, dueDate, priority) {
+export function updateTaskController(taskId, userId, title, description, dueDate, priority, dueTime) {
     return executeController(async () => ({
-        task: await updateTaskService(taskId, userId, title, description, dueDate, priority),
+        task: await updateTaskService(taskId, userId, title, description, dueDate, priority, dueTime),
     }), { task: null });
 }
 

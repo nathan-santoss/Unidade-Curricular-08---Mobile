@@ -13,7 +13,8 @@ export async function createTask(
     title,
     description,
     dueDate,
-    priority
+    priority,
+    dueTime = ""
 ) {
     const db = await getDatabase();
 
@@ -24,15 +25,17 @@ export async function createTask(
         title,
         description,
         due_date,
+        due_time,
         priority,
         status
       )
-      VALUES (?, ?, ?, ?, ?, ?);
+      VALUES (?, ?, ?, ?, ?, ?, ?);
     `,
         userId,
         title.trim(),
         normalizeOptionalText(description),
         normalizeOptionalText(dueDate),
+        normalizeOptionalText(dueTime),
         priority,
         "PENDENTE"
     );
@@ -52,6 +55,7 @@ export async function findTasksByUser(userId) {
         title,
         description,
         due_date,
+        due_time,
         priority,
         status,
         created_at,
@@ -78,6 +82,7 @@ export async function findTaskById(taskId, userId) {
         title,
         description,
         due_date,
+        due_time,
         priority,
         status,
         created_at,
@@ -101,7 +106,8 @@ export async function updateTask(
     title,
     description,
     dueDate,
-    priority
+    priority,
+    dueTime = ""
 ) {
     const db = await getDatabase();
 
@@ -112,6 +118,7 @@ export async function updateTask(
         title = ?,
         description = ?,
         due_date = ?,
+        due_time = ?,
         priority = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
@@ -120,6 +127,7 @@ export async function updateTask(
         title.trim(),
         normalizeOptionalText(description),
         normalizeOptionalText(dueDate),
+        normalizeOptionalText(dueTime),
         priority,
         taskId,
         userId

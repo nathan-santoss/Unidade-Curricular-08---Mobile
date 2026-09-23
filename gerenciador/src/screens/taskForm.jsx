@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import { createTaskController, getTaskByIdController, updateTaskController } from "../controllers/taskController.js";
 import { PRIORITY_OPTIONS, TASK_PRIORITY } from "../constants/taskConstants.js";
 import { formatDateForDisplay } from "../utils/dateUtils.js";
+import { vibrateFeedback } from "../utils/vibration.js";
 import AppButton from "../components/AppButton.jsx";
 import AppInput from "../components/AppInput.jsx";
 import OptionSelector from "../components/OptionSelector.jsx";
@@ -17,6 +18,7 @@ export default function TaskFormPage({ navigation, route }) {
     const [titulo, setTitulo] = useState("");
     const [descricao, setDescricao] = useState("");
     const [dueDate, setDueDate] = useState("");
+    const [dueTime, setDueTime] = useState("");
     const [priority, setPriority] = useState(TASK_PRIORITY.MEDIUM);
     const [loading, setLoading] = useState(editing);
     const [saving, setSaving] = useState(false);
@@ -29,6 +31,7 @@ export default function TaskFormPage({ navigation, route }) {
             setTitulo("");
             setDescricao("");
             setDueDate("");
+            setDueTime("");
             setPriority(TASK_PRIORITY.MEDIUM);
             setError("");
             setLoading(false);
@@ -44,6 +47,7 @@ export default function TaskFormPage({ navigation, route }) {
                 setTitulo(result.task.title);
                 setDescricao(result.task.description || "");
                 setDueDate(formatDateForDisplay(result.task.due_date));
+                setDueTime(result.task.due_time || "");
                 setPriority(result.task.priority);
             } else {
                 setError(result.message);
@@ -59,13 +63,20 @@ export default function TaskFormPage({ navigation, route }) {
         setSaving(true);
         let result;
         if (editing) {
-            result = await updateTaskController(taskId, user.id, titulo, descricao, dueDate, priority);
+            result = await updateTaskController(taskId, user.id, titulo, descricao, dueDate, priority, dueTime);
         } else {
-            result = await createTaskController(user.id, titulo, descricao, dueDate, priority);
+            result = await createTaskController(user.id, titulo, descricao, dueDate, priority, dueTime);
         }
-        setSaving(false);
         if (!result.success) {
+            setSaving(false);
             Alert.alert("Não foi possível salvar", result.message);
+            return;
+        }
+        vibrateFeedback();
+        if (result.task.reminderWarning) {
+            Alert.alert("Tarefa salva", result.task.reminderWarning, [
+                { text: "OK", onPress: () => navigation.goBack() },
+            ], { cancelable: false });
             return;
         }
         navigation.goBack();
@@ -103,6 +114,11 @@ export default function TaskFormPage({ navigation, route }) {
                         placeholder="Adicione detalhes" value={descricao} onChangeText={setDescricao} multiline editable={!saving} />
                     <AppInput label="Data limite (opcional)" accessibilityLabel="Data limite, dia mês e ano" placeholder="DD/MM/AAAA"
                         value={dueDate} onChangeText={setDueDate} maxLength={10} editable={!saving} />
+                    <View style={styles.field}>
+                        <AppInput label="Horário do lembrete (opcional)" placeholder="HH:MM, por exemplo 14:30"
+                            value={dueTime} onChangeText={setDueTime} maxLength={5} editable={!saving} />
+                        <Text style={styles.subtitle}>Com data e horário futuros, você receberá um lembrete no horário informado. Deixe vazio para não receber lembrete.</Text>
+                    </View>
                     <View style={styles.field}>
                         <Text style={styles.label}>Prioridade</Text>
                         <OptionSelector options={PRIORITY_OPTIONS} value={priority} onChange={setPriority} disabled={saving} />

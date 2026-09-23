@@ -4,7 +4,7 @@ Aplicativo acadêmico em React Native/Expo e JavaScript, com contas e tarefas lo
 
 ## Executar
 
-O estado recebido já utiliza **Expo SDK 57**, React 19.2.3 e React Native 0.86.3. Essas versões foram preservadas. AsyncStorage 2.2.0 foi a única dependência de aplicação adicionada.
+O estado recebido já utiliza **Expo SDK 57**, React 19.2.3 e React Native 0.86.3. Essas versões foram preservadas. Foram adicionados AsyncStorage 2.2.0, `expo-device` e `expo-notifications`, nas versões declaradas em `package.json`.
 
 ```sh
 npm install
@@ -26,6 +26,23 @@ O comando `npm run ios` requer macOS e simulador configurado. No Windows, use o 
 - Home com nome real, contagem por status e três tarefas mais recentes.
 - Perfil com nome/e-mail reais, preferência e link do repositório.
 - Carregamento, erros e ações para tentar novamente nas consultas.
+- Configurações com informações reais do dispositivo e vibração ao consultar.
+- Horário opcional nas tarefas, lembrete local automático e vibração ao salvar.
+- Toque na notificação abre os detalhes da tarefa da conta autenticada.
+
+## Configurações e lembretes
+
+Em **Perfil → Configurações**, toque em **Informações do dispositivo**. O botão vibra e exibe modelo, sistema operacional, versão, marca, fabricante, tipo e ambiente físico/virtual. Valores que o aparelho não disponibiliza são identificados na tela.
+
+Ao criar ou editar uma tarefa, preencha a data (`DD/MM/AAAA`) e o horário (`HH:MM`, formato de 24 horas). Um horário novo precisa estar no futuro e exige uma data. O lembrete é agendado para esse instante, no fuso local do aparelho. Deixar o horário vazio mantém a tarefa sem notificação. Salvar com sucesso produz uma vibração breve.
+
+O aplicativo solicita permissão ao agendar. Se a permissão for negada ou o agendamento falhar, a tarefa continua salva e a tela informa o problema. Em Configurações é possível consultar a permissão, abrir os ajustes do aparelho e **Ativar ou atualizar lembretes** depois de autorizar.
+
+Editar o prazo ou título atualiza o lembrete. Concluir, excluir ou retirar o horário cancela o aviso; reabrir uma tarefa com prazo futuro volta a agendá-lo. Ao sair da conta, seus avisos agendados e já apresentados são removidos. Ao entrar ou restaurar a sessão, somente as tarefas futuras e não concluídas da conta atual são reagendadas, sem duplicação.
+
+As notificações são locais e não precisam de servidor ou token de push. Android usa um canal com som e vibração; iOS usa som padrão e vibra também no recebimento em primeiro plano. A vibração com o aplicativo em segundo plano depende do sistema e dos ajustes táteis/notificações do usuário. Modo silencioso, Foco, economia de bateria e permissões podem afetar a apresentação; um simulador não comprova vibração física.
+
+O plugin `expo-notifications` e as permissões Android de vibração e alarmes exatos estão em `app.json`. Mudanças de configuração nativa exigem reconstruir um cliente de desenvolvimento próprio; reiniciar o JavaScript não atualiza um binário existente. No Android, confira também a autorização de alarmes exatos nos ajustes do sistema, quando exigida. Referências: [Notifications do Expo 57](https://docs.expo.dev/versions/v57.0.0/sdk/notifications/) e [Device do Expo 57](https://docs.expo.dev/versions/v57.0.0/sdk/device/).
 
 ## Organização para apresentação
 
@@ -45,13 +62,13 @@ Screens / Components → Controllers → Services → Repositories → SQLite
 | `src/repositories` | Executar SQL parametrizado |
 | `src/database` | Abrir a conexão, ativar chaves estrangeiras e criar tabelas |
 | `src/contexts` | Disponibilizar usuário, login, cadastro, logout e recuperação de sessão |
-| `src/hooks` | Compartilhar a consulta de tarefas ao receber foco entre Home e lista |
+| `src/hooks` | Compartilhar consultas ao receber foco e abrir tarefas pelo toque em notificações |
 | `src/navigation` | Bottom Tabs e Stack de tarefas |
 | `src/constants` | Valores internos e rótulos de status/prioridades |
 | `src/utils` | Validar e formatar datas sem deslocamento de fuso horário |
 | `src/styles` | Estilos compartilhados e estilos específicos existentes |
 
-`App.js` prepara primeiro o SQLite. Depois, `AuthProvider` recupera a sessão e busca o usuário. A navegação só disponibiliza Login/Register quando não há autenticação; quando há, disponibiliza Main. Atualizar o Context troca esse conjunto de rotas e remove o histórico anterior.
+`App.js` prepara primeiro o SQLite. Depois, `AuthProvider` recupera a sessão, busca o usuário e restaura seus lembretes. A navegação só disponibiliza Login/Register quando não há autenticação; quando há, disponibiliza Main e Settings. Atualizar o Context troca esse conjunto de rotas e remove o histórico anterior.
 
 O Stack de tarefas contém `TasksList`, `TaskDetails` e `TaskForm`. Detalhes/edição recebem somente `taskId`. O formulário usa a ausência desse ID para criar e sua presença para editar. `useFocusEffect` recarrega lista, detalhes e Home após voltar de outra tela.
 
@@ -63,11 +80,13 @@ O Stack de tarefas contém `TasksList`, `TaskDetails` e `TaskForm`. Detalhes/edi
 - `AppInput`: compartilha rótulo e campo entre os formulários de cadastro e tarefa, aceitando as propriedades nativas do `TextInput`.
 - `AppButton`: também é reutilizado no login e cadastro, com variante de texto para as ações secundárias.
 
-Essas extrações mantêm os nomes públicos das funções, a separação de responsabilidades e o uso de `if` em vez de ternários. Não foram adicionadas dependências.
+Essas extrações mantêm os nomes públicos das funções, a separação de responsabilidades e o uso de `if` em vez de ternários. O serviço de notificações concentra permissões, agendamento e cancelamento; o utilitário de vibração é compartilhado pelos botões e pelo formulário.
 
 ## Persistência
 
 O arquivo `gerenciador.db` mantém as tabelas originais `users` e `tasks`, com relação **1:N** por `tasks.user_id`. O schema mantém PRIMARY KEY, AUTOINCREMENT, NOT NULL, UNIQUE, DEFAULT, CHECK e FOREIGN KEY com exclusão em cascata. A inicialização é idempotente e não apaga os registros existentes.
+
+O campo opcional `tasks.due_time` guarda o horário. Bancos antigos recebem a coluna por uma migração que consulta `PRAGMA table_info` antes de alterar a tabela; tarefas anteriores continuam sem horário. O identificador de cada notificação combina usuário e tarefa, permitindo cancelar e reagendar sem uma tabela adicional.
 
 Todas as consultas, atualizações e exclusões de tarefas incluem `user_id`. O serviço confirma também a propriedade antes de editar, mudar status ou excluir. Entradas do usuário são parâmetros, nunca partes concatenadas do SQL.
 
@@ -124,5 +143,12 @@ Este ambiente Windows não dispõe de simulador iOS ou iPhone conectado. Conferi
 - [ ] Fazer logout; confirmar que voltar não reabre telas autenticadas. Entrar na A e conferir seus registros.
 - [ ] Abrir o repositório; conferir teclado, rolagem, texto ampliado e área do indicador inferior do iPhone.
 - [ ] Abrir uma tarefa inexistente em teste de desenvolvimento e conferir erro/voltar.
+- [ ] Em Perfil → Configurações, consultar o dispositivo e sentir a vibração do botão.
+- [ ] Criar uma tarefa para alguns minutos à frente, autorizar notificações e sentir a vibração ao salvar.
+- [ ] Receber um lembrete com o app aberto e outro em segundo plano; conferir som/vibração conforme os ajustes do aparelho.
+- [ ] Tocar no aviso com o app aberto e também após encerrá-lo; conferir os detalhes da tarefa.
+- [ ] Alterar o horário e confirmar somente o novo aviso; concluir/excluir uma tarefa antes do prazo e confirmar cancelamento.
+- [ ] Negar a permissão e conferir tarefa salva com aviso; autorizar nos ajustes e atualizar lembretes em Configurações.
+- [ ] Sair da conta A e confirmar que seus lembretes foram cancelados; entrar novamente antes do prazo e conferir reagendamento.
 
 Para a apresentação: demonstre primeiro o CRUD; depois explique a relação entre as tabelas, o caminho View → Controller → Service → Repository e a finalidade diferente de cada armazenamento.

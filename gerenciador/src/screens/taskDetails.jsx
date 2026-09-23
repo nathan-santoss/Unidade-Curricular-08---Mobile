@@ -5,7 +5,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { deleteTaskController, getTaskByIdController, updateTaskStatusController } from "../controllers/taskController.js";
 import { getPriorityLabel, getStatusLabel, STATUS_OPTIONS } from "../constants/taskConstants.js";
-import { formatDateForDisplay } from "../utils/dateUtils.js";
+import { formatTaskDeadline } from "../utils/dateUtils.js";
 import AppButton from "../components/AppButton.jsx";
 import OptionSelector from "../components/OptionSelector.jsx";
 import { commonStyles as styles } from "../styles/commonStyles.js";
@@ -45,6 +45,7 @@ export default function TaskDetailsPage({ route, navigation }) {
             return;
         }
         setTask(result.task);
+        if (result.task.reminderWarning) Alert.alert("Status atualizado", result.task.reminderWarning);
     }
 
     async function deleteTask() {
@@ -79,8 +80,7 @@ export default function TaskDetailsPage({ route, navigation }) {
         );
     }
 
-    let dueDate = "Sem data limite";
-    if (task.due_date) dueDate = formatDateForDisplay(task.due_date);
+    const dueDate = formatTaskDeadline(task);
     let description = "Sem descrição";
     if (task.description) description = task.description;
 

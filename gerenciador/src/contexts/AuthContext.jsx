@@ -17,6 +17,7 @@ import {
     getSavedSessionUserId,
     saveSession,
 } from "../services/sessionService.js";
+import { cancelUserReminders, restoreUserReminders, setNotificationUser } from "../services/notificationService.js";
 
 const AuthContext = createContext(null);
 
@@ -25,6 +26,13 @@ export function AuthProvider({ children }) {
     const [loadingSession, setLoadingSession] = useState(true);
     const [sessionError, setSessionError] = useState("");
     const [sessionAttempt, setSessionAttempt] = useState(0);
+    const [reminderWarning, setReminderWarning] = useState("");
+
+    async function activateUser(authenticatedUser) {
+        setNotificationUser(authenticatedUser.id);
+        setReminderWarning(await restoreUserReminders(authenticatedUser.id));
+        setUser(authenticatedUser);
+    }
 
     useEffect(() => {
         // Verifica se existe uma sessão salva quando o aplicativo é iniciado.
@@ -49,7 +57,7 @@ export function AuthProvider({ children }) {
                     return;
                 }
 
-                setUser(savedUser);
+                await activateUser(savedUser);
             } catch {
                 // Uma falha de leitura não deve apagar uma sessão potencialmente válida.
                 setSessionError("Não foi possível recuperar sua sessão. Tente novamente.");
@@ -67,7 +75,7 @@ export function AuthProvider({ children }) {
         if (!result.success) return result;
         try {
             await saveSession(result.user.id);
-            setUser(result.user);
+            await activateUser(result.user);
             return result;
         } catch {
             return { success: false, message: sessionErrorMessage };
@@ -88,12 +96,21 @@ export function AuthProvider({ children }) {
     // Encerra a sessão atual e remove seus dados do armazenamento seguro.
     async function logout() {
         try {
+            await cancelUserReminders(user.id);
             await clearSession();
+            setNotificationUser(null);
             setUser(null);
+            setReminderWarning("");
             return { success: true };
         } catch {
             return { success: false, message: "Não foi possível encerrar a sessão. Tente novamente." };
         }
+    }
+
+    async function refreshReminders() {
+        const warning = await restoreUserReminders(user.id);
+        setReminderWarning(warning);
+        return warning;
     }
 
     // Centraliza os dados e ações de autenticação disponíveis para o aplicativo.
@@ -104,6 +121,8 @@ export function AuthProvider({ children }) {
         register: register,
         logout: logout,
         sessionError,
+        reminderWarning,
+        refreshReminders,
         retrySession: () => setSessionAttempt((previous) => previous + 1),
     };
 

@@ -7,7 +7,8 @@ import {
     updateTaskStatus,
 } from "../repositories/taskRepository.js";
 import { TASK_PRIORITY, TASK_STATUS } from "../constants/taskConstants.js";
-import { formatDateForDatabase } from "../utils/dateUtils.js";
+import { formatDateForDatabase, formatTimeForDatabase, getTaskDateTime } from "../utils/dateUtils.js";
+import { cancelTaskReminder, updateTaskReminder } from "./notificationService.js";
 
 // Define as prioridades aceitas pelo banco e pelas telas.
 const VALID_PRIORITIES = Object.values(TASK_PRIORITY);
@@ -39,13 +40,31 @@ function validateStatus(status) {
     }
 }
 
+function validateDeadline(dueDate, dueTime, previousTask = null) {
+    const date = formatDateForDatabase(dueDate);
+    const time = formatTimeForDatabase(dueTime);
+    if (time && !date) throw new Error("Informe também a data para agendar o lembrete.");
+    const deadline = getTaskDateTime(date, time);
+    const unchanged = previousTask && previousTask.due_date === date && previousTask.due_time === time;
+    if (deadline && !unchanged && deadline.getTime() <= Date.now()) {
+        throw new Error("Escolha uma data e um horário futuros para o lembrete.");
+    }
+    return { date, time };
+}
+
+async function attachReminder(task) {
+    task.reminderWarning = await updateTaskReminder(task);
+    return task;
+}
+
 // Cadastra uma nova tarefa depois de validar os dados recebidos.
 export async function createTaskService(
     userId,
     title,
     description = "",
     dueDate = "",
-    priority = TASK_PRIORITY.MEDIUM
+    priority = TASK_PRIORITY.MEDIUM,
+    dueTime = ""
 ) {
     validateId(userId);
     validateTaskData(
@@ -53,12 +72,15 @@ export async function createTaskService(
         priority
     );
 
+    const deadline = validateDeadline(dueDate, dueTime);
+
     const taskId = await createTask(
         userId,
         title,
         description,
-        formatDateForDatabase(dueDate),
-        priority
+        deadline.date,
+        priority,
+        deadline.time
     );
 
     // Retorna a tarefa cadastrada para manter as telas atualizadas.
@@ -67,7 +89,7 @@ export async function createTaskService(
         userId
     );
 
-    return task;
+    return attachReminder(task);
 }
 
 // Recupera todas as tarefas pertencentes ao usuário autenticado.
@@ -104,7 +126,8 @@ export async function updateTaskService(
     title,
     description,
     dueDate,
-    priority
+    priority,
+    dueTime = ""
 ) {
     validateTaskData(
         title,
@@ -112,24 +135,25 @@ export async function updateTaskService(
     );
 
     // Confirma que a tarefa existe e pertence ao usuário antes da alteração.
-    await getTaskByIdService(
+    const previousTask = await getTaskByIdService(
         taskId,
         userId
     );
+
+    const deadline = validateDeadline(dueDate, dueTime, previousTask);
+    if (previousTask.due_time) await cancelTaskReminder(taskId, userId);
 
     await updateTask(
         taskId,
         userId,
         title,
         description,
-        formatDateForDatabase(dueDate),
-        priority
+        deadline.date,
+        priority,
+        deadline.time
     );
 
-    return await findTaskById(
-        taskId,
-        userId
-    );
+    return attachReminder(await findTaskById(taskId, userId));
 }
 
 // Atualiza somente o status de uma tarefa.
@@ -141,10 +165,12 @@ export async function updateTaskStatusService(
     validateStatus(status);
 
     // Impede a alteração de uma tarefa inexistente ou de outro usuário.
-    await getTaskByIdService(
+    const previousTask = await getTaskByIdService(
         taskId,
         userId
     );
+
+    if (previousTask.due_time) await cancelTaskReminder(taskId, userId);
 
     await updateTaskStatus(
         taskId,
@@ -152,10 +178,7 @@ export async function updateTaskStatusService(
         status
     );
 
-    return await findTaskById(
-        taskId,
-        userId
-    );
+    return attachReminder(await findTaskById(taskId, userId));
 }
 
 // Exclui uma tarefa depois de confirmar que ela pertence ao usuário.
@@ -163,10 +186,12 @@ export async function deleteTaskService(
     taskId,
     userId
 ) {
-    await getTaskByIdService(
+    const task = await getTaskByIdService(
         taskId,
         userId
     );
+
+    if (task.due_time) await cancelTaskReminder(taskId, userId);
 
     await deleteTask(
         taskId,
