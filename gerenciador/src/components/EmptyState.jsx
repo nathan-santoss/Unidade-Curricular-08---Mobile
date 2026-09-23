@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
+// Reaproveito uma mensagem com título e orientação quando não há itens para exibir.
 export default function EmptyState({ title, message }) {
     return (
         <View style={styles.container}>

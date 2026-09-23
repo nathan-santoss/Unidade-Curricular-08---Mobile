@@ -10,19 +10,20 @@ import { TASK_PRIORITY, TASK_STATUS } from "../constants/taskConstants.js";
 import { formatDateForDatabase, formatTimeForDatabase, getTaskDateTime } from "../utils/dateUtils.js";
 import { cancelTaskReminder, updateTaskReminder } from "./notificationService.js";
 
-// Define as prioridades aceitas pelo banco e pelas telas.
+// Reúno as prioridades permitidas a partir das constantes compartilhadas.
 const VALID_PRIORITIES = Object.values(TASK_PRIORITY);
 
-// Define os status permitidos para uma tarefa.
+// Mantenho a validação de status alinhada aos valores usados pelo aplicativo.
 const VALID_STATUS = Object.values(TASK_STATUS);
 
+// Exijo um número inteiro positivo para identificar uma conta ou tarefa.
 function validateId(id) {
     if (!Number.isSafeInteger(id) || id <= 0) {
         throw new Error("Identificador inválido.");
     }
 }
 
-// Valida os dados principais antes de cadastrar ou atualizar uma tarefa.
+// Rejeito títulos vazios e prioridades fora da lista antes de gravar.
 function validateTaskData(title, priority) {
     if (title.trim() === "") {
         throw new Error("Informe o título da tarefa.");
@@ -33,18 +34,20 @@ function validateTaskData(title, priority) {
     }
 }
 
-// Valida o status antes de atualizar a situação da tarefa.
+// Aceito somente os status definidos para o ciclo de uma tarefa.
 function validateStatus(status) {
     if (VALID_STATUS.includes(status) === false) {
         throw new Error("Status inválido.");
     }
 }
 
+// Trato data e horário juntos, porque um lembrete precisa dos dois valores.
 function validateDeadline(dueDate, dueTime, previousTask = null) {
     const date = formatDateForDatabase(dueDate);
     const time = formatTimeForDatabase(dueTime);
     if (time && !date) throw new Error("Informe também a data para agendar o lembrete.");
     const deadline = getTaskDateTime(date, time);
+    // Permito editar outros campos de uma tarefa vencida quando o prazo continua igual.
     const unchanged = previousTask && previousTask.due_date === date && previousTask.due_time === time;
     if (deadline && !unchanged && deadline.getTime() <= Date.now()) {
         throw new Error("Escolha uma data e um horário futuros para o lembrete.");
@@ -52,12 +55,13 @@ function validateDeadline(dueDate, dueTime, previousTask = null) {
     return { date, time };
 }
 
+// Devolvo um aviso junto da tarefa salva se o agendamento não puder ser concluído.
 async function attachReminder(task) {
     task.reminderWarning = await updateTaskReminder(task);
     return task;
 }
 
-// Cadastra uma nova tarefa depois de validar os dados recebidos.
+// Valido os dados, salvo a tarefa e só então tento agendar o lembrete.
 export async function createTaskService(
     userId,
     title,
@@ -83,7 +87,7 @@ export async function createTaskService(
         deadline.time
     );
 
-    // Retorna a tarefa cadastrada para manter as telas atualizadas.
+    // Busco o registro completo para devolver à tela o que realmente foi salvo.
     const task = await findTaskById(
         taskId,
         userId
@@ -92,7 +96,7 @@ export async function createTaskService(
     return attachReminder(task);
 }
 
-// Recupera todas as tarefas pertencentes ao usuário autenticado.
+// Entrego à listagem apenas as tarefas do usuário informado.
 export async function getUserTasksService(userId) {
     validateId(userId);
     const tasks = await findTasksByUser(userId);
@@ -100,7 +104,7 @@ export async function getUserTasksService(userId) {
     return tasks;
 }
 
-// Recupera uma tarefa específica para detalhes ou edição.
+// Recupero uma tarefa e aviso quando ela não existe para esta conta.
 export async function getTaskByIdService(
     taskId,
     userId
@@ -119,7 +123,7 @@ export async function getTaskByIdService(
     return task;
 }
 
-// Atualiza os dados de uma tarefa já cadastrada.
+// Organizo a edição para validar os dados antes de mexer no lembrete anterior.
 export async function updateTaskService(
     taskId,
     userId,
@@ -134,7 +138,7 @@ export async function updateTaskService(
         priority
     );
 
-    // Confirma que a tarefa existe e pertence ao usuário antes da alteração.
+    // Confirmo a propriedade da tarefa antes de autorizar a alteração.
     const previousTask = await getTaskByIdService(
         taskId,
         userId
@@ -156,7 +160,7 @@ export async function updateTaskService(
     return attachReminder(await findTaskById(taskId, userId));
 }
 
-// Atualiza somente o status de uma tarefa.
+// Ajusto a situação da tarefa e sincronizo o lembrete com o novo status.
 export async function updateTaskStatusService(
     taskId,
     userId,
@@ -164,7 +168,7 @@ export async function updateTaskStatusService(
 ) {
     validateStatus(status);
 
-    // Impede a alteração de uma tarefa inexistente ou de outro usuário.
+    // Interrompo a mudança se não encontrar a tarefa entre os registros desta conta.
     const previousTask = await getTaskByIdService(
         taskId,
         userId
@@ -181,7 +185,7 @@ export async function updateTaskStatusService(
     return attachReminder(await findTaskById(taskId, userId));
 }
 
-// Exclui uma tarefa depois de confirmar que ela pertence ao usuário.
+// Cancelo o aviso antes de excluir a tarefa para não deixar um lembrete sem registro.
 export async function deleteTaskService(
     taskId,
     userId

@@ -14,10 +14,11 @@ export default function HomePage({ navigation }) {
     const { tasks, loading, error, reload } = useUserTasks();
 
     function openTask(taskId) {
-        // Mantém a lista como primeira rota mesmo ao abrir detalhes a partir da Home.
+        // Preservo a lista como rota inicial para o botão Voltar funcionar ao abrir detalhes pela Home.
         navigation.navigate("Tasks", { screen: "TaskDetails", params: { taskId }, initial: false });
     }
 
+    // Componho o cabeçalho da lista com saudação, criação de tarefa e contagem por status.
     const header = (
         <View style={styles.header}>
             <View>
@@ -30,6 +31,7 @@ export default function HomePage({ navigation }) {
             {Boolean(error) && <View style={styles.header}><Text style={commonStyles.error}>{error}</Text><AppButton title="Tentar novamente" onPress={reload} /></View>}
             {!loading && !error && (
                 <View style={styles.summary}>
+                    {/* Conto as tarefas de cada status usando a lista completa da conta. */}
                     {STATUS_OPTIONS.map((option) => (
                         <View key={option.value} style={styles.summaryCard}>
                             <Text style={styles.count}>{tasks.filter((task) => task.status === option.value).length}</Text>
@@ -45,12 +47,14 @@ export default function HomePage({ navigation }) {
     let recentTasks = [];
     let emptyState = null;
     if (!loading && !error) {
+        // Seleciono até três tarefas da lista que já vem ordenada das mais recentes para as antigas.
         recentTasks = tasks.slice(0, 3);
         emptyState = <EmptyState title="Seu dia começa aqui" message="Crie sua primeira tarefa usando o botão acima." />;
     }
 
     return (
         <SafeAreaView style={commonStyles.screen} edges={["top", "left", "right"]}>
+            {/* Uso o ID como chave para o React reconhecer cada cartão nas atualizações. */}
             <FlatList data={recentTasks} keyExtractor={(item) => String(item.id)} contentContainerStyle={commonStyles.content}
                 ListHeaderComponent={header} ListEmptyComponent={emptyState}
                 renderItem={({ item }) => <TaskCard task={item} onPress={() => openTask(item.id)} />} />

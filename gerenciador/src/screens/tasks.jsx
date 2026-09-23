@@ -12,6 +12,7 @@ import EmptyState from "../components/EmptyState.jsx";
 import OptionSelector from "../components/OptionSelector.jsx";
 import { commonStyles } from "../styles/commonStyles.js";
 
+// Acrescento a opção Todas aos status que já uso no restante do aplicativo.
 const FILTER_OPTIONS = [{ value: "ALL", label: "Todas" }, ...STATUS_OPTIONS];
 
 export default function TasksPage({ navigation }) {
@@ -23,7 +24,7 @@ export default function TasksPage({ navigation }) {
     const [preferencesError, setPreferencesError] = useState("");
     const [attempt, setAttempt] = useState(0);
 
-    // Releitura ao voltar do Perfil, onde a preferência pode ter mudado.
+    // Releio a preferência ao voltar à lista, pois ela pode ter mudado no Perfil.
     useFocusEffect(useCallback(() => {
         let active = true;
         setPreferencesLoading(true);
@@ -42,12 +43,14 @@ export default function TasksPage({ navigation }) {
         return () => { active = false; };
     }, [user.id, attempt]));
 
+    // Combino a preferência de concluídas com o filtro de status sem alterar as tarefas salvas.
     const visibleTasks = tasks.filter((task) => {
         if (!showCompleted && task.status === TASK_STATUS.COMPLETED) return false;
         if (filter !== "ALL" && task.status !== filter) return false;
         return true;
     });
 
+    // Repito tanto a consulta das tarefas quanto a leitura da preferência.
     function retry() {
         reload();
         setAttempt((value) => value + 1);
@@ -66,6 +69,7 @@ export default function TasksPage({ navigation }) {
     } else {
         let emptyTitle = "Nenhuma tarefa neste filtro";
         let emptyMessage = "Escolha outro status ou confira sua preferência no Perfil.";
+        // Diferencio uma conta sem tarefas de um filtro que apenas não encontrou resultados.
         if (tasks.length === 0) {
             emptyTitle = "Nenhuma tarefa cadastrada";
             emptyMessage = "Adicione uma tarefa para começar a organizar suas atividades.";
@@ -87,6 +91,7 @@ export default function TasksPage({ navigation }) {
                 </View>
                 <AppButton title="+ Nova tarefa" onPress={() => navigation.navigate("TaskForm")} />
                 <OptionSelector options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
+                {/* Explico por que uma tarefa concluída pode não aparecer na lista. */}
                 {!showCompleted && <Text style={styles.notice}>Concluídas ocultas. Altere essa preferência no Perfil.</Text>}
             </View>
             {content}

@@ -19,7 +19,7 @@ export default function TaskDetailsPage({ route, navigation }) {
     const [error, setError] = useState("");
     const [attempt, setAttempt] = useState(0);
 
-    // Atualiza os detalhes após a edição sem transportar a tarefa inteira pela rota.
+    // Reconsulto os detalhes ao voltar da edição usando só o ID recebido pela rota.
     useFocusEffect(useCallback(() => {
         let active = true;
         setLoading(true);
@@ -35,6 +35,7 @@ export default function TaskDetailsPage({ route, navigation }) {
         return () => { active = false; };
     }, [taskId, user.id, attempt]));
 
+    // Evito mudanças simultâneas e só atualizo a tela após a confirmação do serviço.
     async function changeStatus(status) {
         if (busy || task.status === status) return;
         setBusy(true);
@@ -45,9 +46,11 @@ export default function TaskDetailsPage({ route, navigation }) {
             return;
         }
         setTask(result.task);
+        // Aviso sobre o lembrete separadamente, pois a mudança de status já foi salva.
         if (result.task.reminderWarning) Alert.alert("Status atualizado", result.task.reminderWarning);
     }
 
+    // Volto à lista apenas quando a exclusão termina com sucesso.
     async function deleteTask() {
         if (busy) return;
         setBusy(true);
@@ -60,6 +63,7 @@ export default function TaskDetailsPage({ route, navigation }) {
         navigation.goBack();
     }
 
+    // Peço confirmação antes de executar uma exclusão que não pode ser desfeita.
     function confirmDelete() {
         Alert.alert("Excluir tarefa?", "Esta ação não pode ser desfeita.", [
             { text: "Cancelar", style: "cancel" },
@@ -70,6 +74,7 @@ export default function TaskDetailsPage({ route, navigation }) {
     if (loading) {
         return <SafeAreaView style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></SafeAreaView>;
     }
+    // Interrompo a montagem dos detalhes quando não tenho um registro válido para mostrar.
     if (error || !task) {
         return (
             <SafeAreaView style={styles.center}>

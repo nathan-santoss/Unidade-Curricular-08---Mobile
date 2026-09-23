@@ -2,8 +2,9 @@ import * as SecureStore from "expo-secure-store";
 
 const SESSION_USER_KEY = "session_user_id";
 
-// Salva o identificador do usuário autenticado para manter a sessão no dispositivo.
+// Salvo apenas o ID da conta para reconhecer a sessão na próxima abertura.
 export async function saveSession(userId) {
+    // Converto o número em texto porque o SecureStore recebe valores nesse formato.
     const userIdText = String(userId);
 
     await SecureStore.setItemAsync(
@@ -12,20 +13,20 @@ export async function saveSession(userId) {
     );
 }
 
-// Recupera o usuário salvo anteriormente para restaurar a sessão ao abrir o aplicativo.
+// Leio o ID salvo para tentar restaurar a sessão ao iniciar o aplicativo.
 export async function getSavedSessionUserId() {
     const savedUserId = await SecureStore.getItemAsync(
         SESSION_USER_KEY
     );
 
-    // Retorna nulo quando nenhuma sessão estiver armazenada.
+    // Indico com null que ainda não há uma conta conectada.
     if (savedUserId === null) {
         return null;
     }
 
     const userId = Number(savedUserId);
 
-    // Evita retornar um identificador inválido caso o valor salvo esteja corrompido.
+    // Descarto valores inválidos para não consultar uma conta com um ID corrompido.
     if (!Number.isSafeInteger(userId) || userId <= 0) {
         await clearSession();
         return null;
@@ -34,7 +35,7 @@ export async function getSavedSessionUserId() {
     return userId;
 }
 
-// Remove os dados da sessão quando o usuário sair da conta.
+// Removo a referência da sessão sem apagar o cadastro nem as tarefas.
 export async function clearSession() {
     await SecureStore.deleteItemAsync(
         SESSION_USER_KEY

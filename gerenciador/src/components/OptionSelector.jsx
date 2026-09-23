@@ -1,10 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-// Reutilizado para prioridade, status e filtros, sem acessar regras ou banco.
+// Reutilizo este seletor em prioridades, status e filtros; deixo a ação com a tela que o chamou.
 export default function OptionSelector({ options, value, onChange, disabled = false }) {
     return (
         <View style={styles.options}>
             {options.map((option) => {
+                // Comparo os valores para destacar somente a opção escolhida.
                 const selected = option.value === value;
                 const buttonStyle = [styles.option];
                 const textStyle = [styles.text];
@@ -16,6 +17,7 @@ export default function OptionSelector({ options, value, onChange, disabled = fa
                 return (
                     <Pressable key={option.value} style={buttonStyle} disabled={disabled}
                         accessibilityRole="radio" accessibilityState={{ checked: selected, disabled }}
+                        // Devolvo o valor da opção para a tela atualizar seu estado ou salvar a mudança.
                         onPress={() => onChange(option.value)}>
                         <Text style={textStyle}>{option.label}</Text>
                     </Pressable>

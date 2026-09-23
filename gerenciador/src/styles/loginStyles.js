@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 
+// Concentro a aparência da entrada para reutilizá-la na tela e no formulário de login.
 export const login_css = StyleSheet.create({
   container: {
     flex: 1,
@@ -8,7 +9,7 @@ export const login_css = StyleSheet.create({
   formContainer: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center', // Centraliza o formulário no meio da tela verticalmente
+    justifyContent: 'center', // Mantenho o formulário centralizado na direção vertical.
   },
   titulo: {
     fontSize: 24,
@@ -17,6 +18,7 @@ export const login_css = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  // Delimito cada campo com borda e espaço inferior para separar e-mail e senha.
   input: {
     backgroundColor: '#fff',
     height: 50,

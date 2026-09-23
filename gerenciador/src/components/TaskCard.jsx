@@ -2,13 +2,16 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getPriorityLabel, getStatusLabel, TASK_PRIORITY, TASK_STATUS } from "../constants/taskConstants.js";
 import { formatTaskDeadline } from "../utils/dateUtils.js";
 
+// Apresento um resumo da tarefa e recebo da tela a ação que devo executar ao tocar.
 export default function TaskCard({ task, onPress }) {
+    // Combino os estilos básicos com cores que ajudam a reconhecer prioridade e conclusão.
     const priorityStyle = [styles.badge];
     if (task.priority === TASK_PRIORITY.HIGH) priorityStyle.push(styles.high);
     if (task.priority === TASK_PRIORITY.LOW) priorityStyle.push(styles.low);
     const statusStyle = [styles.status];
     if (task.status === TASK_STATUS.COMPLETED) statusStyle.push(styles.completed);
 
+    // Descrevo título, status e prioridade para quem utiliza um leitor de tela.
     return (
         <Pressable style={styles.card} onPress={onPress} accessibilityRole="button"
             accessibilityLabel={`${task.title}, ${getStatusLabel(task.status)}, prioridade ${getPriorityLabel(task.priority)}`}>

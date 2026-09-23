@@ -1,15 +1,15 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Indico quais arquivos locais ou gerados deixo fora do controle de versão.
 
-# dependencies
+# Excluo as dependências instaladas, pois posso recuperá-las com o npm.
 node_modules/
 
-# Expo
+# Mantenho fora do Git os dados locais do Expo e os resultados de exportação.
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Evito versionar caches nativos, cópias temporárias e arquivos de assinatura.
 .kotlin/
 *.orig.*
 *.jks
@@ -18,24 +18,24 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
-# Metro
+# Descarto os arquivos temporários usados na verificação do Metro.
 .metro-health-check*
 
-# debug
+# Ignoro relatórios locais de execução dos gerenciadores de pacotes.
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
+# Retiro metadados do macOS e arquivos PEM que podem conter chaves ou certificados.
 .DS_Store
 *.pem
 
-# local env files
+# Preservo as configurações particulares do ambiente fora do repositório.
 .env*.local
 
-# typescript
+# Excluo o cache incremental do TypeScript caso alguma ferramenta o gere.
 *.tsbuildinfo
 
-# generated native folders
+# Deixo de versionar as pastas nativas geradas a partir da configuração Expo.
 /ios
 /android

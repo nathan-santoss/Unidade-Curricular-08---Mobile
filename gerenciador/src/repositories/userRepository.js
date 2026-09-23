@@ -1,12 +1,13 @@
 import { getDatabase } from "../database/database.js";
 
-// Cadastra os dados básicos de um usuário no banco local.
+// Registro nome e e-mail no banco local e devolvo o ID criado pelo SQLite.
 export async function createUser(name, email) {
     const db = await getDatabase();
 
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
+    // Passo os valores separados do SQL: os pontos de interrogação recebem esses dados.
     const result = await db.runAsync(
         `
       INSERT INTO users (
@@ -22,7 +23,7 @@ export async function createUser(name, email) {
     return result.lastInsertRowId;
 }
 
-// Procura um usuário pelo e-mail utilizado no login.
+// Procuro a conta pelo e-mail já convertido para letras minúsculas.
 export async function findUserByEmail(email) {
     const db = await getDatabase();
 
@@ -46,7 +47,7 @@ export async function findUserByEmail(email) {
     return user;
 }
 
-// Busca um usuário específico utilizando o identificador salvo no banco.
+// Localizo o usuário pelo ID para recuperar os dados da sessão.
 export async function findUserById(userId) {
     const db = await getDatabase();
 
@@ -68,8 +69,7 @@ export async function findUserById(userId) {
     return user;
 }
 
-// Remove um usuário do banco.
-// As tarefas relacionadas também serão removidas pela chave estrangeira.
+// Excluo a conta; o vínculo configurado no banco também remove suas tarefas.
 export async function deleteUser(userId) {
     const db = await getDatabase();
 

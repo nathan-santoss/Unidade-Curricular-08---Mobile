@@ -1,13 +1,13 @@
 import { getDatabase } from "../database/database.js";
 
-// Campos opcionais vazios são gravados como NULL tanto no cadastro quanto na edição.
+// Converto campos vazios em NULL para representar a ausência de um valor no banco.
 function normalizeOptionalText(value) {
     const text = value.trim();
     if (text === "") return null;
     return text;
 }
 
-// Cadastra uma nova tarefa vinculada ao usuário autenticado.
+// Vinculo a nova tarefa ao usuário e começo com o status pendente.
 export async function createTask(
     userId,
     title,
@@ -18,6 +18,7 @@ export async function createTask(
 ) {
     const db = await getDatabase();
 
+    // Uso parâmetros no lugar de concatenar o texto digitado dentro do comando SQL.
     const result = await db.runAsync(
         `
       INSERT INTO tasks (
@@ -40,10 +41,11 @@ export async function createTask(
         "PENDENTE"
     );
 
+    // Recupero o identificador gerado para consultar a tarefa completa após o cadastro.
     return result.lastInsertRowId;
 }
 
-// Busca todas as tarefas pertencentes a um usuário.
+// Consulto só as tarefas desta conta e trago as mais recentes primeiro.
 export async function findTasksByUser(userId) {
     const db = await getDatabase();
 
@@ -70,7 +72,7 @@ export async function findTasksByUser(userId) {
     return tasks;
 }
 
-// Busca uma tarefa específica e garante que ela pertença ao usuário informado.
+// Combino o ID da tarefa com o do usuário para não consultar dados de outra conta.
 export async function findTaskById(taskId, userId) {
     const db = await getDatabase();
 
@@ -99,7 +101,7 @@ export async function findTaskById(taskId, userId) {
     return task;
 }
 
-// Atualiza as informações principais de uma tarefa existente.
+// Atualizo os campos editáveis e registro a data da alteração.
 export async function updateTask(
     taskId,
     userId,
@@ -134,7 +136,7 @@ export async function updateTask(
     );
 }
 
-// Altera apenas o status da tarefa sem modificar seus outros dados.
+// Modifico apenas a situação da tarefa, mantendo título, prazo e prioridade.
 export async function updateTaskStatus(
     taskId,
     userId,
@@ -157,7 +159,7 @@ export async function updateTaskStatus(
     );
 }
 
-// Remove uma tarefa pertencente ao usuário informado.
+// Apago a tarefa somente quando os IDs da tarefa e do dono correspondem.
 export async function deleteTask(
     taskId,
     userId

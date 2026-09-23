@@ -1,7 +1,8 @@
 import { StyleSheet } from "react-native";
 
-// Elementos visuais compartilhados pelas telas, mantendo a identidade existente.
+// Centralizo os estilos reutilizados para manter cores e espaçamentos consistentes entre telas.
 export const commonStyles = StyleSheet.create({
+    // Preencho a área disponível e permito que o conteúdo de telas com rolagem cresça.
     screen: { flex: 1, backgroundColor: "#F7F7F7" },
     content: { flexGrow: 1, padding: 20, gap: 20 },
     title: { fontSize: 28, fontWeight: "700", color: "#1F1F1F" },
@@ -11,6 +12,7 @@ export const commonStyles = StyleSheet.create({
     label: { fontSize: 14, fontWeight: "600", color: "#444444" },
     value: { fontSize: 16, lineHeight: 24, color: "#1F1F1F" },
     field: { gap: 8 },
+    // Defino o tamanho mínimo e o contraste usados nos campos dos formulários.
     input: {
         minHeight: 50, borderWidth: 1, borderColor: "#D8D8D8", borderRadius: 10,
         paddingHorizontal: 14, paddingVertical: 12, backgroundColor: "#FFFFFF",

@@ -6,7 +6,7 @@ import { getShowCompletedTasks, saveShowCompletedTasks } from "../services/prefe
 import AppButton from "../components/AppButton.jsx";
 import { commonStyles } from "../styles/commonStyles.js";
 
-// Endereço conferido no remote origin deste projeto.
+// Uso o endereço do repositório configurado no projeto para abrir sua página externa.
 const REPOSITORY_URL = "https://github.com/nathan-santoss/Unidade-Curricular-08---Mobile";
 
 export default function ProfilePage({ navigation }) {
@@ -18,6 +18,7 @@ export default function ProfilePage({ navigation }) {
     const [error, setError] = useState("");
     const [attempt, setAttempt] = useState(0);
 
+    // Recupero a preferência desta conta e permito repetir a leitura se houver falha.
     useEffect(() => {
         let active = true;
         setLoading(true);
@@ -33,6 +34,7 @@ export default function ProfilePage({ navigation }) {
             }
         }
         loadPreference();
+        // Evito atualizar a tela com uma resposta que chegou depois de ela ser desmontada.
         return () => { active = false; };
     }, [user.id, attempt]);
 
@@ -40,7 +42,7 @@ export default function ProfilePage({ navigation }) {
         if (saving || loading) return;
         setSaving(true);
         try {
-            // Só confirma visualmente a alteração depois de persistir a preferência.
+            // Confirmo a posição do interruptor somente depois de salvar a preferência.
             await saveShowCompletedTasks(user.id, value);
             setShowCompleted(value);
         } catch (failure) {
@@ -50,6 +52,7 @@ export default function ProfilePage({ navigation }) {
         }
     }
 
+    // Bloqueio a saída enquanto salvo a preferência ou já estou encerrando a sessão.
     async function fazerLogout() {
         if (leaving || saving) return;
         setLeaving(true);
@@ -58,6 +61,7 @@ export default function ProfilePage({ navigation }) {
         if (!result.success) Alert.alert("Não foi possível sair", result.message);
     }
 
+    // Entrego o endereço ao sistema para abrir no navegador disponível.
     async function openRepository() {
         try {
             await Linking.openURL(REPOSITORY_URL);
@@ -83,6 +87,7 @@ export default function ProfilePage({ navigation }) {
                 <View style={commonStyles.card}>
                     <View style={styles.preference}>
                         <Text style={styles.preferenceLabel}>Mostrar tarefas concluídas</Text>
+                        {/* Ligo o interruptor ao estado e impeço alterações durante operações pendentes. */}
                         <Switch accessibilityLabel="Mostrar tarefas concluídas" value={showCompleted} onValueChange={changePreference}
                             disabled={loading || saving || leaving || Boolean(error)} trackColor={{ false: "#BDBDBD", true: "#2563EB" }} />
                     </View>

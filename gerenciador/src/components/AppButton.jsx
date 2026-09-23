@@ -1,6 +1,8 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 
+// Compartilho aparência, carregamento e bloqueio dos botões usados nas telas.
 export default function AppButton({ title, onPress, loading = false, disabled = false, variant = "primary" }) {
+    // Começo pelo visual padrão e acrescento as diferenças de cada variante.
     const buttonStyles = [styles.button];
     const textStyles = [styles.text];
     let indicatorColor = "#FFFFFF";
@@ -17,8 +19,10 @@ export default function AppButton({ title, onPress, loading = false, disabled = 
         textStyles.push(styles.dangerText);
         indicatorColor = "#B91C1C";
     }
+    // Reduzo a opacidade para indicar que o botão está temporariamente indisponível.
     if (disabled || loading) buttonStyles.push(styles.disabled);
 
+    // Informo também aos leitores de tela se o botão está ocupado ou desabilitado.
     return (
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || loading, busy: loading }}
             style={buttonStyles} onPress={onPress} disabled={disabled || loading}>

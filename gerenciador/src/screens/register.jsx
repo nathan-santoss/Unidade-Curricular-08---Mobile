@@ -8,6 +8,7 @@ import { commonStyles } from "../styles/commonStyles.js";
 
 export default function RegisterPage({ navigation }) {
     const { register } = useAuth();
+    // Guardo o que foi digitado nos estados para enviar os valores ao cadastrar.
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -17,8 +18,9 @@ export default function RegisterPage({ navigation }) {
     let registerButtonText = "Cadastrar";
     if (loading) registerButtonText = "Cadastrando...";
 
-    // O serviço valida os dados; a tela confere apenas a confirmação de senha.
+    // Comparo as duas senhas aqui e deixo as demais validações com o serviço de cadastro.
     async function cadastrarUsuario() {
+        // Evito iniciar outro cadastro enquanto a primeira solicitação ainda está em andamento.
         if (loading) return;
         if (password !== confirmPassword) {
             Alert.alert("Atenção", "As senhas informadas são diferentes.");
@@ -31,7 +33,7 @@ export default function RegisterPage({ navigation }) {
         if (!result.success) {
             Alert.alert("Não foi possível cadastrar", result.message);
         }
-        // O AuthContext atualizado faz a navegação abrir a área principal.
+        // Deixo a mudança do contexto abrir a área principal após o cadastro.
     }
 
     return (
@@ -42,6 +44,7 @@ export default function RegisterPage({ navigation }) {
                         <Text style={styles.title}>Criar conta</Text>
                         <Text style={styles.subtitle}>Preencha seus dados para começar a organizar suas tarefas.</Text>
                     </View>
+                    {/* Reutilizo os campos do aplicativo e oculto visualmente as senhas digitadas. */}
                     <View style={styles.form}>
                         <AppInput label="Nome" placeholder="Digite seu nome" value={name}
                             onChangeText={setName} autoCapitalize="words" editable={!loading} />
@@ -63,7 +66,7 @@ export default function RegisterPage({ navigation }) {
     );
 }
 
-// Mantém apenas o espaçamento e a tipografia próprios do cadastro.
+// Reservo estes estilos para o espaçamento e a tipografia específicos do cadastro.
 const styles = StyleSheet.create({
     content: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 30 },
     header: { marginBottom: 32 },

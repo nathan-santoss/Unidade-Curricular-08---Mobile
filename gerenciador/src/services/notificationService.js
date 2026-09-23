@@ -5,19 +5,22 @@ import { findTasksByUser } from "../repositories/taskRepository.js";
 import { getTaskDateTime } from "../utils/dateUtils.js";
 import { vibrateFeedback } from "../utils/vibration.js";
 
+// Separo o canal de som/vibração da marca que uso para reconhecer os avisos do gerenciador.
 const CHANNEL_ID = "task-reminders";
 const SOURCE = "gerenciador-task";
 let activeUserId = null;
 
+// Acompanho a conta conectada em memória para decidir quais avisos posso apresentar.
 export function setNotificationUser(userId) {
     activeUserId = userId;
 }
 
+// Reconheço os lembretes que criei pelo campo source incluído na notificação.
 export function isTaskNotification(request) {
     return request.content.data?.source === SOURCE;
 }
 
-// Mostra o lembrete com o app aberto apenas para a conta autenticada.
+// Apresento os lembretes recebidos com o aplicativo aberto somente para a conta ativa.
 Notifications.setNotificationHandler({
     handleNotification: async (notification) => {
         const show = isTaskNotification(notification.request) &&
@@ -30,6 +33,7 @@ Notifications.setNotificationHandler({
     },
 });
 
+// Agrupo os lembretes num canal Android com som e vibração configurados.
 async function prepareChannel() {
     if (Platform.OS === "android") {
         await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
@@ -39,6 +43,7 @@ async function prepareChannel() {
     }
 }
 
+// Considero também as autorizações provisória e temporária oferecidas pelo iOS.
 function hasPermission(permission) {
     if (Platform.OS === "ios") {
         return [Notifications.IosAuthorizationStatus.AUTHORIZED,
@@ -51,6 +56,7 @@ function hasPermission(permission) {
 export async function getNotificationPermission(request = false) {
     await prepareChannel();
     let permission = await Notifications.getPermissionsAsync();
+    // Só abro o pedido de permissão quando solicitado e quando o sistema permite perguntar.
     if (request && !hasPermission(permission) && permission.canAskAgain) {
         permission = await Notifications.requestPermissionsAsync({
             ios: { allowAlert: true, allowSound: true, allowBadge: false },
@@ -64,6 +70,7 @@ export async function getNotificationPermission(request = false) {
     return { allowed: hasPermission(permission), label };
 }
 
+// Componho uma chave única com conta e tarefa para localizar o aviso depois.
 function reminderId(taskId, userId) {
     return `${SOURCE}-${userId}-${taskId}`;
 }
@@ -71,6 +78,7 @@ function reminderId(taskId, userId) {
 export async function cancelTaskReminder(taskId, userId) {
     const identifier = reminderId(taskId, userId);
     try {
+        // Cancelo a entrega futura e retiro também um aviso que já esteja visível.
         await Notifications.cancelScheduledNotificationAsync(identifier);
         await Notifications.dismissNotificationAsync(identifier);
     } catch {
@@ -80,13 +88,15 @@ export async function cancelTaskReminder(taskId, userId) {
 
 async function scheduleTaskReminder(task) {
     await Notifications.scheduleNotificationAsync({
-        // O ID estável evita duplicar lembretes ao reiniciar ou editar o aplicativo.
+        // Reutilizo o mesmo identificador para atualizar o lembrete sem criar outro aviso.
         identifier: reminderId(task.id, task.user_id),
         content: {
             title: "Hora da sua tarefa", body: task.title, sound: "default",
             vibrate: [0, 250, 150, 250],
+            // Incluo os IDs para abrir a tarefa certa quando houver um toque no aviso.
             data: { source: SOURCE, taskId: task.id, userId: task.user_id },
         },
+        // Agendo uma única entrega para a data e o horário escolhidos.
         trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: getTaskDateTime(task.due_date, task.due_time), channelId: CHANNEL_ID,
@@ -94,12 +104,13 @@ async function scheduleTaskReminder(task) {
     });
 }
 
+// Excluo do agendamento as concluídas, as sem horário e as que já venceram.
 function needsReminder(task) {
     if (task.status === TASK_STATUS.COMPLETED || !task.due_time || !task.due_date) return false;
     return getTaskDateTime(task.due_date, task.due_time).getTime() > Date.now();
 }
 
-// A tarefa já foi salva: falhas de notificação viram avisos, sem incentivar novo cadastro.
+// Trato falhas de notificação como avisos, pois já salvei a tarefa no banco.
 export async function updateTaskReminder(task) {
     try {
         if (!needsReminder(task)) return "";
@@ -114,7 +125,7 @@ export async function updateTaskReminder(task) {
     }
 }
 
-// Remove apenas notificações deste gerenciador, inclusive as já apresentadas.
+// Retiro os avisos desta conta, tanto os futuros quanto os que já apareceram.
 export async function cancelUserReminders(userId) {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     for (const request of scheduled) {
@@ -130,16 +141,18 @@ export async function cancelUserReminders(userId) {
     }
 }
 
+// Recrio os lembretes a partir do banco ao entrar na conta ou atualizar as Configurações.
 export async function restoreUserReminders(userId) {
     try {
         const tasks = await findTasksByUser(userId);
         const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-        // Limpa agendamentos antigos, de tarefas apagadas ou de outra conta.
+        // Limpo os agendamentos anteriores antes de reconstruir os lembretes da conta atual.
         for (const request of scheduled) {
             if (isTaskNotification(request)) {
                 await Notifications.cancelScheduledNotificationAsync(request.identifier);
             }
         }
+        // Removo da central de notificações os avisos que pertencem a outra conta.
         const presented = await Notifications.getPresentedNotificationsAsync();
         for (const notification of presented) {
             const request = notification.request;
@@ -149,6 +162,7 @@ export async function restoreUserReminders(userId) {
         }
         const pending = tasks.filter(needsReminder);
         if (pending.length === 0) return "";
+        // Consulto a autorização sem abrir um pedido durante a restauração automática.
         const permission = await getNotificationPermission();
         if (!permission.allowed) return "Autorize as notificações para receber os lembretes das tarefas com horário.";
         for (const task of pending) await scheduleTaskReminder(task);

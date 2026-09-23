@@ -15,6 +15,7 @@ export default function TaskFormPage({ navigation, route }) {
     const { user } = useAuth();
     const taskId = route.params?.taskId;
     const editing = taskId !== undefined;
+    // Acompanho os campos em estados para refletir cada alteração feita no formulário.
     const [titulo, setTitulo] = useState("");
     const [descricao, setDescricao] = useState("");
     const [dueDate, setDueDate] = useState("");
@@ -25,8 +26,9 @@ export default function TaskFormPage({ navigation, route }) {
     const [error, setError] = useState("");
     const [attempt, setAttempt] = useState(0);
 
-    // Um único formulário atende ao cadastro e à edição, recebendo somente o ID.
+    // Reaproveito o formulário para cadastro e edição, decidindo pelo ID recebido na rota.
     useEffect(() => {
+        // Limpo os valores quando abro o formulário para uma nova tarefa.
         if (!editing) {
             setTitulo("");
             setDescricao("");
@@ -42,10 +44,12 @@ export default function TaskFormPage({ navigation, route }) {
         setError("");
         async function loadTask() {
             const result = await getTaskByIdController(taskId, user.id);
+            // Descarto uma resposta atrasada se o formulário já tiver sido fechado.
             if (!active) return;
             if (result.success) {
                 setTitulo(result.task.title);
                 setDescricao(result.task.description || "");
+                // Converto a data do banco para o formato usado no campo de edição.
                 setDueDate(formatDateForDisplay(result.task.due_date));
                 setDueTime(result.task.due_time || "");
                 setPriority(result.task.priority);
@@ -59,6 +63,7 @@ export default function TaskFormPage({ navigation, route }) {
     }, [editing, taskId, user.id, attempt]);
 
     async function salvarTarefa() {
+        // Bloqueio outro envio enquanto salvo, carrego os dados ou aguardo resolver um erro.
         if (saving || loading || error) return;
         setSaving(true);
         let result;
@@ -72,7 +77,9 @@ export default function TaskFormPage({ navigation, route }) {
             Alert.alert("Não foi possível salvar", result.message);
             return;
         }
+        // Confirmo pelo toque que a tarefa foi salva, mesmo se o lembrete precisar de atenção.
         vibrateFeedback();
+        // Aguardo a leitura do aviso antes de voltar, evitando incentivar um cadastro repetido.
         if (result.task.reminderWarning) {
             Alert.alert("Tarefa salva", result.task.reminderWarning, [
                 { text: "OK", onPress: () => navigation.goBack() },
@@ -115,6 +122,7 @@ export default function TaskFormPage({ navigation, route }) {
                     <AppInput label="Data limite (opcional)" accessibilityLabel="Data limite, dia mês e ano" placeholder="DD/MM/AAAA"
                         value={dueDate} onChangeText={setDueDate} maxLength={10} editable={!saving} />
                     <View style={styles.field}>
+                        {/* Ofereço o horário separadamente para permitir tarefas sem lembrete. */}
                         <AppInput label="Horário do lembrete (opcional)" placeholder="HH:MM, por exemplo 14:30"
                             value={dueTime} onChangeText={setDueTime} maxLength={5} editable={!saving} />
                         <Text style={styles.subtitle}>Com data e horário futuros, você receberá um lembrete no horário informado. Deixe vazio para não receber lembrete.</Text>

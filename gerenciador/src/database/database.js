@@ -2,7 +2,7 @@ import * as SQLite from "expo-sqlite";
 
 let databasePromise = null;
 
-// Abre o banco apenas uma vez e reutiliza a mesma conexão durante o uso do aplicativo.
+// Reaproveito a mesma conexão para evitar abrir o banco a cada consulta.
 export async function getDatabase() {
     if (databasePromise === null) {
         databasePromise = SQLite.openDatabaseAsync("gerenciador.db");
@@ -11,22 +11,22 @@ export async function getDatabase() {
     try {
         return await databasePromise;
     } catch (error) {
-        // Permite tentar abrir novamente se o armazenamento falhar temporariamente.
+        // Libero uma nova tentativa de abertura se a conexão falhar.
         databasePromise = null;
         throw error;
     }
 }
 
-// Prepara as tabelas necessárias sempre que o aplicativo for iniciado.
+// Preparo as tabelas antes de permitir o acesso às telas.
 export async function initializeDatabase() {
     const db = await getDatabase();
 
-    // Ativa o funcionamento das chaves estrangeiras no SQLite.
+    // Ativo o vínculo entre usuários e tarefas para o SQLite respeitar essa relação.
     await db.execAsync(`
     PRAGMA foreign_keys = ON;
   `);
 
-    // Armazena os usuários cadastrados no aplicativo.
+    // Guardo os dados da conta aqui; deixo a senha no armazenamento seguro.
     await db.execAsync(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +37,7 @@ export async function initializeDatabase() {
     );
   `);
 
-    // Armazena as tarefas e relaciona cada uma ao usuário que a criou.
+    // Relaciono cada tarefa ao seu dono por user_id e limito os status e prioridades aceitos.
     await db.execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,7 +62,8 @@ export async function initializeDatabase() {
     );
   `);
 
-    // Atualiza bancos já existentes sem apagar usuários ou tarefas.
+    // Confiro as colunas antes de adicionar o horário, preservando os cadastros antigos.
+    // Com essa consulta, descubro se a atualização já foi aplicada neste aparelho.
     const columns = await db.getAllAsync("PRAGMA table_info(tasks);");
     if (!columns.some((column) => column.name === "due_time")) {
         await db.execAsync("ALTER TABLE tasks ADD COLUMN due_time TEXT;");

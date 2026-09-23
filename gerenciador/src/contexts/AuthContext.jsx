@@ -19,15 +19,18 @@ import {
 } from "../services/sessionService.js";
 import { cancelUserReminders, restoreUserReminders, setNotificationUser } from "../services/notificationService.js";
 
+// Crio um ponto de acesso compartilhado para não passar a conta manualmente entre telas.
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+    // Mantenho a conta em memória e separo os estados de carregamento, erro e lembretes.
     const [user, setUser] = useState(null);
     const [loadingSession, setLoadingSession] = useState(true);
     const [sessionError, setSessionError] = useState("");
     const [sessionAttempt, setSessionAttempt] = useState(0);
     const [reminderWarning, setReminderWarning] = useState("");
 
+    // Associo as notificações à conta antes de liberar a área autenticada.
     async function activateUser(authenticatedUser) {
         setNotificationUser(authenticatedUser.id);
         setReminderWarning(await restoreUserReminders(authenticatedUser.id));
@@ -35,22 +38,22 @@ export function AuthProvider({ children }) {
     }
 
     useEffect(() => {
-        // Verifica se existe uma sessão salva quando o aplicativo é iniciado.
+        // Tento restaurar a conta salva quando o aplicativo inicia.
         async function restoreSession() {
             setLoadingSession(true);
             setSessionError("");
             try {
                 const userId = await getSavedSessionUserId();
 
-                // Finaliza a busca quando nenhuma sessão estiver armazenada.
+                // Encerro a recuperação quando não encontro um ID salvo.
                 if (userId === null) {
                     return;
                 }
 
-                // Busca no SQLite os dados do usuário ligado à sessão salva.
+                // Consulto o cadastro pelo ID para recuperar nome e e-mail atuais.
                 const savedUser = await findUserById(userId);
 
-                // Remove uma sessão antiga caso o usuário não exista mais no banco.
+                // Descarto uma sessão antiga se o cadastro correspondente já não existe.
                 if (savedUser === null) {
                     await clearSession();
 
@@ -59,7 +62,7 @@ export function AuthProvider({ children }) {
 
                 await activateUser(savedUser);
             } catch {
-                // Uma falha de leitura não deve apagar uma sessão potencialmente válida.
+                // Preservo a sessão salva quando a leitura falha, permitindo tentar novamente.
                 setSessionError("Não foi possível recuperar sua sessão. Tente novamente.");
                 setUser(null);
             } finally {
@@ -70,7 +73,7 @@ export function AuthProvider({ children }) {
         restoreSession();
     }, [sessionAttempt]);
 
-    // Login e cadastro compartilham a gravação da sessão, mas mantêm mensagens próprias.
+    // Compartilho a conclusão do login e do cadastro, recebendo a mensagem adequada a cada falha.
     async function completeAuthentication(result, sessionErrorMessage) {
         if (!result.success) return result;
         try {
@@ -93,7 +96,7 @@ export function AuthProvider({ children }) {
             "Sua conta foi criada, mas a sessão não pôde ser salva. Volte ao login e entre com seus dados.");
     }
 
-    // Encerra a sessão atual e remove seus dados do armazenamento seguro.
+    // Cancelo os lembretes antes de limpar a sessão e retirar a conta da memória.
     async function logout() {
         try {
             await cancelUserReminders(user.id);
@@ -107,13 +110,14 @@ export function AuthProvider({ children }) {
         }
     }
 
+    // Reaproveito a restauração para a atualização manual e guardo o aviso para o Perfil.
     async function refreshReminders() {
         const warning = await restoreUserReminders(user.id);
         setReminderWarning(warning);
         return warning;
     }
 
-    // Centraliza os dados e ações de autenticação disponíveis para o aplicativo.
+    // Disponibilizo os dados e as ações da conta às telas pelo mesmo contexto.
     const authData = {
         user: user,
         loadingSession: loadingSession,
@@ -123,6 +127,7 @@ export function AuthProvider({ children }) {
         sessionError,
         reminderWarning,
         refreshReminders,
+        // Altero este contador para executar novamente o efeito que recupera a sessão.
         retrySession: () => setSessionAttempt((previous) => previous + 1),
     };
 
@@ -133,11 +138,11 @@ export function AuthProvider({ children }) {
     );
 }
 
-// Permite acessar a autenticação de forma simples em qualquer tela.
+// Facilito o acesso à conta e às ações de autenticação com este hook.
 export function useAuth() {
     const context = useContext(AuthContext);
 
-    // Impede o uso do contexto fora da estrutura preparada pelo AuthProvider.
+    // Aviso quando uma tela tenta consultar a autenticação fora do seu provedor.
     if (context === null) {
         throw new Error(
             "useAuth precisa ser utilizado dentro de AuthProvider."

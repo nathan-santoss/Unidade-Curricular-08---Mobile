@@ -15,6 +15,7 @@ import { commonStyles as styles } from "./src/styles/commonStyles.js";
 
 const Stack = createNativeStackNavigator();
 
+// Escolho entre recuperar a sessão, mostrar um erro ou liberar as telas adequadas à conta.
 function AppNavigation() {
     const { user, loadingSession, sessionError, retrySession } = useAuth();
     if (loadingSession) {
@@ -34,7 +35,7 @@ function AppNavigation() {
         );
     }
 
-    // A mudança do Context desmonta as rotas antigas, inclusive o histórico de login.
+    // Troco o conjunto de rotas conforme a sessão e retiro do histórico as telas anteriores.
     let screens;
     if (user === null) {
         screens = (
@@ -59,6 +60,7 @@ function AppNavigation() {
     );
 }
 
+// Preparo o banco antes de montar a autenticação e a navegação do aplicativo.
 export default function App() {
     const [databaseReady, setDatabaseReady] = useState(false);
     const [databaseError, setDatabaseError] = useState(false);
@@ -70,6 +72,7 @@ export default function App() {
             setDatabaseError(false);
             try {
                 await initializeDatabase();
+                // Atualizo a tela somente se esta tentativa de preparação ainda estiver ativa.
                 if (active) setDatabaseReady(true);
             } catch {
                 if (active) setDatabaseError(true);
@@ -79,6 +82,7 @@ export default function App() {
         return () => { active = false; };
     }, [attempt]);
 
+    // Defino o conteúdo conforme o resultado da preparação, com opção de tentar novamente.
     let content;
     if (databaseError) {
         content = (
@@ -98,6 +102,7 @@ export default function App() {
         content = <AuthProvider><AppNavigation /></AuthProvider>;
     }
 
+    // Forneço às telas as medidas das áreas ocupadas por recortes e barras do aparelho.
     return (
         <SafeAreaProvider>
             <StatusBar style="dark" />

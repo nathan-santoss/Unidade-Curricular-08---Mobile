@@ -1,4 +1,4 @@
-// Os valores internos permanecem iguais aos CHECKs definidos no SQLite.
+// Preservo os valores aceitos pelo SQLite para usar as mesmas opções em todo o aplicativo.
 export const TASK_STATUS = {
     PENDING: "PENDENTE",
     IN_PROGRESS: "EM_ANDAMENTO",
@@ -11,6 +11,7 @@ export const TASK_PRIORITY = {
     HIGH: "ALTA",
 };
 
+// Traduzo os valores internos para os textos apresentados ao usuário.
 export function getStatusLabel(status) {
     switch (status) {
         case TASK_STATUS.PENDING: return "Pendente";
@@ -20,6 +21,7 @@ export function getStatusLabel(status) {
     }
 }
 
+// Acrescento a escrita amigável de cada prioridade sem mudar o valor salvo.
 export function getPriorityLabel(priority) {
     switch (priority) {
         case TASK_PRIORITY.LOW: return "Baixa";
@@ -29,6 +31,7 @@ export function getPriorityLabel(priority) {
     }
 }
 
+// Transformo as constantes em pares de valor e rótulo para montar os seletores.
 export const STATUS_OPTIONS = Object.values(TASK_STATUS).map((value) => ({
     value, label: getStatusLabel(value),
 }));

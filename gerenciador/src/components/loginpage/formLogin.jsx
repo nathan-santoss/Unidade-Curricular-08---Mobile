@@ -21,13 +21,14 @@ export default function FormLogin({
 
     let loginButtonText = "Entrar";
 
-    // Altera o texto do botão enquanto o login estiver sendo processado.
+    // Sinalizo no botão que a tentativa de entrada está em andamento.
     if (loading === true) {
         loginButtonText = "Entrando...";
     }
 
-    // Envia as credenciais para a autenticação e libera o acesso quando forem válidas.
+    // Encaminho e-mail e senha ao contexto, que coordena a autenticação e a sessão.
     async function fazerLogin() {
+        // Enquanto aguardo a resposta, bloqueio uma segunda tentativa de entrada.
         if (loading) return;
         setLoading(true);
 
@@ -38,7 +39,7 @@ export default function FormLogin({
 
         setLoading(false);
 
-        // Exibe para o usuário o motivo quando a autenticação não for concluída.
+        // Apresento a mensagem retornada quando não consigo concluir a entrada.
         if (result.success === false) {
             Alert.alert(
                 "Não foi possível entrar",
@@ -48,17 +49,17 @@ export default function FormLogin({
             return;
         }
 
-        // O AuthContext atualizado faz a navegação abrir a área principal.
+        // Delego ao contexto a mudança que libera a navegação da conta.
     }
 
     return (
         <View style={login_css.formContainer}>
-            {/* Identifica a finalidade principal do formulário. */}
+            {/* Apresento o título que identifica a tela de entrada. */}
             <Text style={login_css.titulo}>
                 Realize Login
             </Text>
 
-            {/* Campo utilizado para localizar o usuário cadastrado. */}
+            {/* Conecto o texto digitado ao estado do e-mail usado para localizar a conta. */}
             <TextInput
                 style={login_css.input}
                 placeholder="Digite seu e-mail"
@@ -70,7 +71,7 @@ export default function FormLogin({
                 keyboardType="email-address"
             />
 
-            {/* Campo protegido utilizado para validar a senha da conta. */}
+            {/* Oculto os caracteres na tela enquanto guardo a senha digitada no estado. */}
             <TextInput
                 style={login_css.input}
                 placeholder="Digite sua senha"

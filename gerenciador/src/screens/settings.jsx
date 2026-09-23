@@ -9,6 +9,7 @@ import { commonStyles as styles } from "../styles/commonStyles.js";
 
 export default function SettingsPage({ navigation }) {
     const { reminderWarning, refreshReminders } = useAuth();
+    // Separo os dados do aparelho dos estados de consulta e de atualização dos lembretes.
     const [information, setInformation] = useState([]);
     const [loadingDevice, setLoadingDevice] = useState(false);
     const [permissionLabel, setPermissionLabel] = useState("Consultando permissão...");
@@ -18,18 +19,20 @@ export default function SettingsPage({ navigation }) {
         let active = true;
         async function loadPermission() {
             const result = await getNotificationPermissionController();
+            // Ignoro a consulta concluída depois de sair desta tela.
             if (!active) return;
             if (result.success) setPermissionLabel(result.permission.label);
             else setPermissionLabel("Não foi possível consultar a permissão.");
         }
         loadPermission();
-        // Atualiza o status ao voltar dos ajustes do sistema.
+        // Reconsulto a permissão quando volto dos ajustes do aparelho para o aplicativo.
         const subscription = AppState.addEventListener("change", (state) => {
             if (state === "active") loadPermission();
         });
         return () => { active = false; subscription.remove(); };
     }, []);
 
+    // Vibro no toque e consulto os dados do aparelho para preencher os cartões.
     async function showDeviceInformation() {
         if (loadingDevice) return;
         vibrateFeedback();
@@ -43,6 +46,7 @@ export default function SettingsPage({ navigation }) {
         setInformation(result.information);
     }
 
+    // Tento obter a autorização antes de recriar os lembretes das tarefas futuras.
     async function activateReminders() {
         if (updating) return;
         setUpdating(true);
@@ -63,6 +67,7 @@ export default function SettingsPage({ navigation }) {
         setUpdating(false);
     }
 
+    // Abro os ajustes do sistema para permitir a mudança de uma permissão negada.
     async function openSystemSettings() {
         try {
             await Linking.openSettings();
@@ -87,6 +92,7 @@ export default function SettingsPage({ navigation }) {
                 </View>
                 <Text style={styles.sectionTitle}>Dispositivo</Text>
                 <AppButton title="Informações do dispositivo" onPress={showDeviceInformation} loading={loadingDevice} />
+                {/* Crio um cartão para cada informação retornada pelo serviço do dispositivo. */}
                 {information.map((info) => (
                     <View key={info.label} style={styles.card}>
                         <Text style={styles.label}>{info.label}</Text>

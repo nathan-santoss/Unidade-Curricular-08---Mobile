@@ -1,5 +1,6 @@
 import * as Device from "expo-device";
 
+// Traduzo o código do aparelho para uma descrição fácil de ler na tela.
 function getDeviceTypeLabel(type) {
     switch (type) {
         case Device.DeviceType.PHONE: return "Celular";
@@ -10,11 +11,14 @@ function getDeviceTypeLabel(type) {
     }
 }
 
+// Consulto o aparelho em uso para mostrar informações reais nas Configurações.
 export async function getDeviceInformation() {
     const type = await Device.getDeviceTypeAsync();
+    // Distingo um aparelho físico de um ambiente virtual de desenvolvimento.
     let environment = "Virtual (emulador ou simulador)";
     if (Device.isDevice) environment = "Dispositivo físico";
 
+    // Organizo rótulo e valor no mesmo formato e indico quando um dado não está disponível.
     return [
         { label: "Modelo", value: Device.modelName },
         { label: "Sistema operacional", value: Device.osName },

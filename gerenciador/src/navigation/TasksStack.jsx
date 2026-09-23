@@ -9,24 +9,25 @@ const Stack = createNativeStackNavigator();
 export default function TasksStack() {
     return (
         <Stack.Navigator
-            // Define a lista de tarefas como a primeira tela deste fluxo.
+            // Começo pela lista para permitir voltar a ela depois de abrir uma tarefa.
             initialRouteName="TasksList"
             screenOptions={{
-                // Mantém o cabeçalho padrão escondido para usar o layout próprio das telas.
+                // Deixo cada tela cuidar de seu título e dos botões de navegação.
                 headerShown: false,
             }}
         >
-            {/* Lista das tarefas do usuário autenticado. */}
+            {/* Apresento a lista que consulta as tarefas da conta conectada. */}
             <Stack.Screen
                 name="TasksList"
                 component={TasksPage}
             />
 
-            {/* Formulário compartilhado pelo cadastro e pela edição. */}
+            {/* Reaproveito o formulário: sem ID crio uma tarefa; com ID edito a existente. */}
             <Stack.Screen
                 name="TaskForm"
                 component={TaskFormPage}
             />
+            {/* Reservo esta rota para consultar e alterar a situação de uma tarefa. */}
             <Stack.Screen name="TaskDetails" component={TaskDetailsPage} />
         </Stack.Navigator>
     );

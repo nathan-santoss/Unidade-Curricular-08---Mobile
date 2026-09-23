@@ -8,24 +8,25 @@ import { useTaskNotifications } from "../hooks/useTaskNotifications.js";
 const Tab = createBottomTabNavigator();
 
 export default function MainTabs({ navigation }) {
+    // Habilito a abertura de tarefas por notificação enquanto a conta estiver conectada.
     useTaskNotifications(navigation);
     return (
         <Tab.Navigator
-            // Define a Home como a primeira área exibida após o login.
+            // Escolho a Home como primeira aba depois do login.
             initialRouteName="Home"
             screenOptions={{
-                // Remove o cabeçalho padrão para manter o visual próprio das telas.
+                // Oculto o cabeçalho padrão para usar os títulos definidos em cada tela.
                 headerShown: false,
 
-                // Esconde a barra inferior enquanto o teclado estiver aberto.
+                // Recolho as abas enquanto o teclado ocupa a parte inferior da tela.
                 tabBarHideOnKeyboard: true,
 
-                // Define as cores utilizadas pelas abas ativas e inativas.
+                // Diferencio pelas cores a aba selecionada das demais.
                 tabBarActiveTintColor: "#2563EB",
                 tabBarInactiveTintColor: "#737373",
                 tabBarIconStyle: { display: "none" },
 
-                // Configura o visual da barra de navegação inferior.
+                // Ajusto espaçamento, fundo e borda da barra inferior.
                 tabBarStyle: {
                     paddingTop: 8,
                     backgroundColor: "#FFFFFF",
@@ -33,14 +34,14 @@ export default function MainTabs({ navigation }) {
                     borderTopColor: "#E5E5E5",
                 },
 
-                // Define o visual dos nomes exibidos nas abas.
+                // Padronizo o tamanho e o peso dos nomes das abas.
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",
                 },
             }}
         >
-            {/* Exibe o resumo principal do gerenciador. */}
+            {/* Apresento o resumo e o acesso às tarefas recentes na Home. */}
             <Tab.Screen
                 name="Home"
                 component={HomePage}
@@ -49,10 +50,7 @@ export default function MainTabs({ navigation }) {
                 }}
             />
 
-            {/* 
-        Usa um Stack próprio para permitir que a área de tarefas
-        navegue entre lista, formulário e detalhes.
-      */}
+            {/* Separo o histórico de tarefas para navegar entre lista, formulário e detalhes. */}
             <Tab.Screen
                 name="Tasks"
                 component={TasksStack}
@@ -61,7 +59,7 @@ export default function MainTabs({ navigation }) {
                 }}
             />
 
-            {/* Exibe os dados da conta e disponibiliza a ação de logout. */}
+            {/* Reúno os dados da conta, as preferências e a opção de sair no Perfil. */}
             <Tab.Screen
                 name="Profile"
                 component={ProfilePage}

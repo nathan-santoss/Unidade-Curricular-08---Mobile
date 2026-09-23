@@ -6,12 +6,12 @@ import {
     findUserByEmail,
 } from "../repositories/userRepository.js";
 
-// Gera uma chave exclusiva para armazenar a senha de cada usuário.
+// Separo as senhas por uma chave que inclui o ID de cada conta.
 function getPasswordKey(userId) {
     return `user_password_${userId}`;
 }
 
-// Valida os dados obrigatórios antes de realizar o cadastro.
+// Confiro os dados obrigatórios antes de começar a gravação do cadastro.
 function validateRegisterData(name, email, password) {
     if (name.trim() === "") {
         throw new Error("Informe o nome.");
@@ -21,6 +21,7 @@ function validateRegisterData(name, email, password) {
         throw new Error("Informe o e-mail.");
     }
 
+    // Com essa expressão, verifico se o e-mail tem texto antes e depois do @ e um domínio.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
         throw new Error("Informe um e-mail válido.");
     }
@@ -34,13 +35,14 @@ function validateRegisterData(name, email, password) {
     }
 }
 
-// Cadastra o usuário no SQLite e mantém a senha separada no armazenamento seguro.
+// Divido o cadastro entre os dados públicos no SQLite e a senha no SecureStore.
 export async function registerUser(name, email, password) {
     validateRegisterData(name, email, password);
 
+    // Retiro espaços nas pontas e padronizo maiúsculas para comparar o mesmo endereço.
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Impede que o mesmo e-mail seja cadastrado mais de uma vez.
+    // Verifico se o e-mail já existe para evitar uma conta duplicada.
     const existingUser = await findUserByEmail(normalizedEmail);
 
     if (existingUser !== null) {
@@ -51,13 +53,13 @@ export async function registerUser(name, email, password) {
     const passwordKey = getPasswordKey(userId);
 
     try {
-        // A senha não fica armazenada diretamente na tabela de usuários.
+        // Reservo o SecureStore para guardar a senha fora da tabela de usuários.
         await SecureStore.setItemAsync(
             passwordKey,
             password
         );
     } catch (error) {
-        // Remove o cadastro caso a senha não possa ser armazenada com segurança.
+        // Desfaço o cadastro incompleto quando não consigo salvar a senha.
         await deleteUser(userId);
 
         throw new Error("Não foi possível concluir o cadastro.");
@@ -70,7 +72,7 @@ export async function registerUser(name, email, password) {
     };
 }
 
-// Confere o e-mail e a senha informados antes de liberar o acesso.
+// Valido as credenciais antes de devolver a conta autenticada.
 export async function loginUser(email, password) {
     if (email.trim() === "") {
         throw new Error("Informe o e-mail.");
@@ -80,9 +82,10 @@ export async function loginUser(email, password) {
         throw new Error("Informe a senha.");
     }
 
+    // Retiro espaços nas pontas e padronizo maiúsculas para comparar o mesmo endereço.
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Localiza primeiro os dados públicos do usuário no SQLite.
+    // Busco primeiro a conta para descobrir qual chave de senha consultar.
     const user = await findUserByEmail(normalizedEmail);
 
     if (user === null) {
@@ -91,7 +94,7 @@ export async function loginUser(email, password) {
 
     const passwordKey = getPasswordKey(user.id);
 
-    // Recupera a senha protegida para comparar com a informação digitada.
+    // Leio a senha do armazenamento seguro para comparar com o valor informado.
     const savedPassword = await SecureStore.getItemAsync(
         passwordKey
     );

@@ -1,3 +1,4 @@
+<!-- Apresento aqui a execução, a organização e os cuidados de uso do projeto. -->
 # Gerenciador de tarefas
 
 Aplicativo acadêmico em React Native/Expo e JavaScript, com contas e tarefas locais. Não utiliza servidor, API ou banco online.
@@ -46,6 +47,8 @@ O plugin `expo-notifications` e as permissões Android de vibração e alarmes e
 
 ## Organização para apresentação
 
+<!-- Explico o caminho entre a tela e o banco para facilitar a leitura dos arquivos comentados. -->
+
 ```text
 Screens / Components → Controllers → Services → Repositories → SQLite
                               Context API: autenticação em execução
@@ -81,6 +84,24 @@ O Stack de tarefas contém `TasksList`, `TaskDetails` e `TaskForm`. Detalhes/edi
 - `AppButton`: também é reutilizado no login e cadastro, com variante de texto para as ações secundárias.
 
 Essas extrações mantêm os nomes públicos das funções, a separação de responsabilidades e o uso de `if` em vez de ternários. O serviço de notificações concentra permissões, agendamento e cancelamento; o utilitário de vibração é compartilhado pelos botões e pelo formulário.
+
+### Leitura dos comentários e dos arquivos de configuração
+
+Comento os trechos de decisão, validação, armazenamento e navegação em primeira pessoa, usando frases como “Confiro”, “Reaproveito” e “Ao voltar, consulto”. Distribuo as explicações por todos os arquivos JavaScript e JSX, inclusive os estilos, sem repetir em cada linha o que o código já deixa claro.
+
+<!-- Descrevo aqui os arquivos que não aceitam comentários internos, preservando seus formatos. -->
+
+| Arquivo | Como utilizo no projeto |
+| --- | --- |
+| `app.json` | Configuro nome, identificação, aparência de abertura, permissões Android e plugins nativos. Mantenho JSON válido, sem comentários internos. |
+| `assets/icon.png` | Defino o ícone geral do aplicativo. |
+| `assets/adaptive-icon.png` | Forneço a imagem de primeiro plano do ícone adaptável do Android. |
+| `assets/splash-icon.png` | Utilizo a imagem na tela de abertura configurada no Expo. |
+| `assets/favicon.png` | Reservo o ícone indicado para a versão web, embora ela não faça parte da entrega atual. |
+| `.gitignore` | Seleciono arquivos locais e gerados que não devem entrar no repositório. |
+| `AGENTS.md` | Mantenho a orientação de consultar a documentação indicada antes de escrever código. |
+
+Preservo `package.json`, `package-lock.json` e a pasta `node_modules` fora desta revisão de comentários.
 
 ## Persistência
 
